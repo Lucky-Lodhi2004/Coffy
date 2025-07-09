@@ -1,11 +1,39 @@
-from coffy.graph import graph
+import json
+from coffy.graph.executor import CypherExecutor
+from coffy.graph.graphdb import GraphDB
 
-g = graph("social")
-g.add_node({"id": "1", "label": "Person", "name": "Alice"})
-g.add_node({"id": "2", "label": "Person", "name": "Bob"})
-g.add_node({"id": "3", "label": "Person", "name": "Charlie"})
-g.add_edge({"source": "1", "target": "2", "label": "FRIEND"})
-g.add_edge({"source": "1", "target": "3", "label": "FRIEND"})
+if __name__ == "__main__":
+    db = GraphDB("mytestdb2")
+    exec = CypherExecutor(db)
 
-friends_named_bob = (g >> "FRIEND" >> "Person").where("name").eq("Bob").run()
-print(friends_named_bob)
+    # CREATE test
+    exec.execute(
+        'CREATE (a:Person {name: "Alice"})-[:KNOWS]->(b:Person {name: "Bob"}), (a)-[:WORKS_AT]->(c:Company {name: "Initech"})'
+    )
+
+    # MATCH + RETURN test
+    results = exec.execute(
+        'MATCH (a:Person)-[:KNOWS]->(b:Person), (a)-[:WORKS_AT]->(c:Company) WHERE a.name="Alice" RETURN DISTINCT c'
+    )
+    
+    print("\n\n----------------------------------------------------------------")
+
+    # Pretty print only the 'return' results
+    for item in results:
+        if 'return' in item:
+            print(json.dumps(item['return'], indent=2))
+
+    # DELETE test (leave as is)
+    exec.execute(
+        'MATCH (a:Person)-[r:KNOWS]->(b:Person) WHERE b.name="Bob" DELETE r, b'
+    )
+    
+    print("\n\n----------------------------------------------------------------")
+
+    print(
+        "All nodes after deletion:",
+        json.dumps([n.to_dict() for n in db.all_nodes()], indent=2)
+    )
+
+
+# todo: duplicate ids are printed, need to fix that
