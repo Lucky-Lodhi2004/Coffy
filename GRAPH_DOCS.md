@@ -20,7 +20,7 @@ Author: nsarathy
 ```python
 from coffy.graph import GraphDB
 
-db = GraphDB(directed=True)
+db = GraphDB(directed=True, path=...)
 ```
 
 ---

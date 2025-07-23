@@ -3,8 +3,8 @@
 **Coffy** is a lightweight embedded database engine for Python, designed for local-first apps, scripts, and tools. It includes:
 
 - `coffy.nosql`: A simple JSON-backed NoSQL engine with a fluent, chainable query interface  
-- `coffy.sql`: A minimal wrapper over SQLite for executing raw SQL with clean tabular results  
-- `coffy.graph`: An in-memory graph engine built on `networkx` with advanced filtering and logic-based querying
+- `coffy.sql`: A wrapper over SQLite for executing raw SQL with clean tabular results  
+- `coffy.graph`: An graph engine built on `networkx` with advanced filtering and logic-based querying
 
 No dependencies (except `networkx`). No boilerplate. Just data.
 
@@ -34,7 +34,7 @@ pip install coffy
 
 - SQLite-backed engine with raw SQL query support  
 - Outputs as readable tables or exportable lists  
-- Uses in-memory DB by default, or file-based if initialized with a path  
+- Uses in-memory DB by default, or json-based if initialized with a path  
 
 📄 [SQL Documentation →](./SQL_DOCS.md)
 
@@ -44,7 +44,7 @@ pip install coffy
 
 - Wrapper around `networkx` with simplified node/relationship API  
 - Query nodes and relationships using filters like `gt`, `lt`, `eq`, `or`, `not`  
-- Returns clean structured output, easy to extend  
+- Uses in-memory DB by default, or json-based if initialized with a path  
 
 📄 [Graph Documentation →](./GRAPH_DOCS.md)
 

@@ -1,8 +1,14 @@
 import networkx as nx
+import json
+import os
 
 class GraphDB:
-    def __init__(self, directed=False):
+    def __init__(self, directed=False, path=None):
         self.g = nx.DiGraph() if directed else nx.Graph()
+        self.directed = directed
+        self.path = path
+        if path and os.path.exists(path):
+            self.load(path)
 
     # Node operations
     def add_node(self, node_id, **attrs):
@@ -97,3 +103,23 @@ class GraphDB:
             "nodes": self.nodes(),
             "relationships": self.relationships()
         }
+
+    def save(self, path=None):
+        path = path or self.path
+        if not path:
+            raise ValueError("No path specified to save the graph.")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, indent=4)
+
+    def load(self, path=None):
+        path = path or self.path
+        if not path:
+            raise ValueError("No path specified to load the graph.")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.g.clear()
+        for node in data.get("nodes", []):
+            self.add_node(node["id"], **{k: v for k, v in node.items() if k != "id"})
+        for rel in data.get("relationships", []):
+            self.add_relationship(rel["source"], rel["target"],
+                                  **{k: v for k, v in rel.items() if k not in ["source", "target"]})
