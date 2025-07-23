@@ -3,5 +3,5 @@
 
 from .engine import CollectionManager
 
-def doc(collection_name: str, path: str = None):
+def db(collection_name: str, path: str = None):
     return CollectionManager(collection_name, path=path)
