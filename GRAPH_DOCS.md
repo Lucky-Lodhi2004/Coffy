@@ -109,6 +109,35 @@ db.find_nodes(age={"lt": 25}, _logic="not")
 
 ---
 
+## 💾 Persistence
+
+You can save and load graphs using JSON files.
+
+### 🔄 `save(path: str)`
+
+Saves the current graph (nodes + relationships) to a JSON file.
+
+```python
+db.save("graph_data.json")
+```
+---
+
+If a path was already provided at init, you can also just call:
+```python
+db.save()
+```
+
+### `load(path:str)`
+
+```python
+db = GraphDB(directed=True, path="graph_data.json")  # auto-loads
+
+# OR
+db = GraphDB(directed=True)
+db.load("graph_data.json")
+
+```
+
 ## 🧪 Example
 
 ```python
