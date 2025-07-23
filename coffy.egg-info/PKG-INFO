@@ -1,3 +1,24 @@
+Metadata-Version: 2.4
+Name: coffy
+Version: 0.1.1
+Summary: Lightweight local NoSQL, SQL, and Graph embedded database engine
+Author: nsarathy
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: networkx>=3.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 # ☕ Coffy
 
 **Coffy** is a lightweight embedded database engine for Python, designed for local-first apps, scripts, and tools. It includes:
@@ -26,7 +47,7 @@ pip install coffy
 - Joins, updates, filters, aggregation, export/import  
 - All data saved to human-readable `.json` files  
 
-📄 [NoSQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/NOSQL_DOCS.md)
+📄 [NoSQL Documentation →](./NOSQL_DOCS.md)
 
 ---
 
@@ -36,7 +57,7 @@ pip install coffy
 - Outputs as readable tables or exportable lists  
 - Uses in-memory DB by default, or json-based if initialized with a path  
 
-📄 [SQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/SQL_DOCS.md)
+📄 [SQL Documentation →](./SQL_DOCS.md)
 
 ---
 
@@ -46,7 +67,7 @@ pip install coffy
 - Query nodes and relationships using filters like `gt`, `lt`, `eq`, `or`, `not`  
 - Uses in-memory DB by default, or json-based if initialized with a path  
 
-📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/GRAPH_DOCS.md)
+📄 [Graph Documentation →](./GRAPH_DOCS.md)
 
 ---
 
