@@ -13,47 +13,57 @@ class QueryBuilder:
         self.all_collections = all_collections or {}
         self._lookup_done = False
         self._lookup_results = None
+        
+    @staticmethod
+    def _get_nested(doc, dotted_key):
+        keys = dotted_key.split('.')
+        for k in keys:
+            if not isinstance(doc, dict) or k not in doc:
+                return None
+            doc = doc[k]
+        return doc
 
     def where(self, field):
         self.current_field = field
         return self
 
     # Comparison
-    def eq(self, value): return self._add_filter(lambda d: d.get(self.current_field) == value)
-    def ne(self, value): return self._add_filter(lambda d: d.get(self.current_field) != value)
+    def eq(self, value): return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) == value)
+    def ne(self, value): return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) != value)
     def gt(self, value):
         return self._add_filter(
-            lambda d: isinstance(d.get(self.current_field), (int, float)) and d.get(self.current_field) > value
+            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (int, float)) and QueryBuilder._get_nested(d, self.current_field) > value
         )
 
     def gte(self, value):
         return self._add_filter(
-            lambda d: isinstance(d.get(self.current_field), (int, float)) and d.get(self.current_field) >= value
+            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (int, float)) and QueryBuilder._get_nested(d, self.current_field) >= value
         )
 
     def lt(self, value):
         return self._add_filter(
-            lambda d: isinstance(d.get(self.current_field), (int, float)) and d.get(self.current_field) < value
+            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (int, float)) and QueryBuilder._get_nested(d, self.current_field) < value
         )
 
     def lte(self, value):
         return self._add_filter(
-            lambda d: isinstance(d.get(self.current_field), (int, float)) and d.get(self.current_field) <= value
+            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (int, float)) and QueryBuilder._get_nested(d, self.current_field) <= value
         )
 
     def in_(self, values):
         return self._add_filter(
-            lambda d: d.get(self.current_field) in values
+            lambda d: QueryBuilder._get_nested(d, self.current_field) in values
         )
 
     def nin(self, values):
         return self._add_filter(
-            lambda d: d.get(self.current_field) not in values
+            lambda d: QueryBuilder._get_nested(d, self.current_field) not in values
         )
 
-    def matches(self, regex): return self._add_filter(lambda d: re.search(regex, str(d.get(self.current_field))))
+    def matches(self, regex): return self._add_filter(lambda d: re.search(regex, str(QueryBuilder._get_nested(d, self.current_field))))
     
-    def exists(self): return self._add_filter(lambda d: self.current_field in d)
+    def exists(self):
+        return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) is not None)
 
     # Logic grouping
     def _and(self, *fns):
@@ -87,11 +97,23 @@ class QueryBuilder:
         return self
 
     # Core execution
-    def run(self):
+    def run(self, fields=None):
         results = [doc for doc in self.documents if all(f(doc) for f in self.filters)]
         if self._lookup_done:
             results = self._lookup_results
+
+        if fields is not None:
+            projected = []
+            for doc in results:
+                proj = {}
+                for f in fields:
+                    value = QueryBuilder._get_nested(doc, f)
+                    proj[f] = value
+                projected.append(proj)
+            return DocList(projected)
+
         return DocList(results)
+
 
     def update(self, changes):
         count = 0
