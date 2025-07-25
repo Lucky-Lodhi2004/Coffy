@@ -3,10 +3,15 @@
 **Coffy** is a lightweight embedded database engine for Python, designed for local-first apps, scripts, and tools. It includes:
 
 - `coffy.nosql`: A simple JSON-backed NoSQL engine with a fluent, chainable query interface  
-- `coffy.sql`: A wrapper over SQLite for executing raw SQL with clean tabular results  
-- `coffy.graph`: An graph engine built on `networkx` with advanced filtering and logic-based querying
+- `coffy.graph`: An graph engine built on `networkx` with advanced filtering and logic-based querying  
+- `coffy.sql`: A wrapper over `SQLite` for executing raw SQL  
 
-No dependencies (except `networkx`). No boilerplate. Just data.
+---
+## Latest Updates
+- Added projection and dot-notation support for nested fields in NoSQL queries. Expanded logic chaining (`_and`, `_or`, `_not`) with improved test and better query semantics.
+- GraphDB now supports saving query results, fixed relationship type serialization, and added more robust unit coverage.
+- Unit tests added to test NoSQL and Graph database features.
+- Documentation Updated.
 
 ---
 
@@ -22,11 +27,21 @@ pip install coffy
 
 ### `coffy.nosql`
 
-- JSON-based collections with fluent `.where().eq().gt()...` query chaining  
-- Joins, updates, filters, aggregation, export/import  
-- All data saved to human-readable `.json` files  
+- Embedded NoSQL document store with a fluent, chainable query API
+- Supports nested fields, logical filters, aggregations, projections, and joins
+- Built for local usage with optional persistence; minimal setup, fast iteration
 
 📄 [NoSQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/NOSQL_DOCS.md)
+
+---
+
+### `coffy.graph`
+
+- Lightweight, file-backed graph database using `networkx` under the hood
+- Supports pattern matching, label/type filtering, logical conditions, and projections
+- Query results can be saved, updated, or transformed; ideal for local, schema-flexible graph data
+
+📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/GRAPH_DOCS.md)
 
 ---
 
@@ -37,16 +52,6 @@ pip install coffy
 - Uses in-memory DB by default, or json-based if initialized with a path  
 
 📄 [SQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/SQL_DOCS.md)
-
----
-
-### `coffy.graph`
-
-- Wrapper around `networkx` with simplified node/relationship API  
-- Query nodes and relationships using filters like `gt`, `lt`, `eq`, `or`, `not`  
-- Uses in-memory DB by default, or json-based if initialized with a path  
-
-📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/GRAPH_DOCS.md)
 
 ---
 
@@ -61,21 +66,21 @@ print(users.where("name").eq("Neel").first())
 ```
 
 ```python
-from coffy.sql import init, query
-
-init("app.db")
-query("CREATE TABLE test (id INT, name TEXT)")
-query("INSERT INTO test VALUES (1, 'Neel')")
-print(query("SELECT * FROM test"))
-```
-
-```python
 from coffy.graph import GraphDB
 
 g = GraphDB(directed=True)
 g.add_nodes([{"id": 1, "name": "Neel"}, {"id": 2, "name": "Tanaya"}])
 g.add_relationships([{"source": 1, "target": 2, "type": "friend"}])
 print(g.find_relationships(type="friend"))
+```
+
+```python
+from coffy.sql import init, query
+
+init("app.db")
+query("CREATE TABLE test (id INT, name TEXT)")
+query("INSERT INTO test VALUES (1, 'Neel')")
+print(query("SELECT * FROM test"))
 ```
 
 ---

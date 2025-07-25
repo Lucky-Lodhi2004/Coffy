@@ -1,271 +1,447 @@
-# 📘 Coffy NoSQL Database
+# Coffy NoSQL Engine
 
-A lightweight, embedded NoSQL database for Python. JSON-backed storage, fluent querying, and powerful filtering—all without a server.
+- Embedded NoSQL document store with a fluent, chainable query API
+- Supports nested fields, logical filters, aggregations, projections, and joins
+- Built for local usage with optional persistence; minimal setup, fast iteration
 
-Author: nsarathy
+> Scope: local, single-process, small datasets. No indexes, no transactions. Designed for clarity and fast iteration.
 
 ---
+## Table of Contents
 
-## 🛠️ Getting Started
+- [Quick Start](#quick-start)
+- [Data Model & Persistence](#data-model--persistence)
+- [Start Here](#start-here)
+- [CollectionManager](#collectionmanager)
+    - [Constructor](#constructor)
+    - [Insertion](#insertion)
+    - [Query entrypoints](#query-entrypoints)
+    - [Aggregations (collection-level helpers)](#aggregations-collection-level-helpers)
+    - [Maintenance & IO](#maintenance--io)
+- [QueryBuilder](#querybuilder)
+    - [Field selection](#field-selection)
+    - [Comparison operators](#comparison-operators)
+    - [Logic grouping](#logic-grouping)
+    - [Execution](#execution)
+    - [Mutation](#mutation)
+    - [Aggregations (query-scoped)](#aggregations-query-scoped)
+    - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
+- [DocList](#doclist)
+- [Error Handling](#error-handling)
+- [Performance & Limits](#performance--limits)
+- [Example: end-to-end](#example-end-to-end)
+
+---
+## Quick Start
 
 ```python
 from coffy.nosql import db
 
-users = db("users", path="users_data.json")
-orders = db("orders", path="orders_data.json")
+users = db("users", path="data/users.json")
+users.clear()  # start clean for this demo
+
+users.add_many([
+    {"id": 1, "name": "Neel", "email": "neel@a.com", "age": 30, "address": {"city": "Indy"}},
+    {"id": 2, "name": "Bea",  "email": "bea@b.com",  "age": 25, "address": {"city": "Austin"}},
+    {"id": 3, "name": "Carl", "email": "carl@c.com", "age": 40},
+])
+
+# Basic equality
+q = users.where("name").eq("Neel")
+print(q.first())
+# -> {'id': 1, 'name': 'Neel', ...}
+
+# Nested field access
+q = users.where("address.city").eq("Austin")
+print(q.count())
+# -> 1
+
+# Projection
+print(q.run(fields=["id", "address.city"]).as_list())
+# -> [{'id': 2, 'address.city': 'Austin'}]
 ```
 
 ---
 
-## 📦 Collection Methods
+## Data Model & Persistence
 
-### `add(document: dict)`
-Add a single document.
-```python
-users.add({"id": 1, "name": "Neel"})
+- A **collection** stores a list of **documents** (plain `dict`s).
+- Documents can have **different fields**.
+- Use `path="file.json"` for durable persistence; omitted or invalid path means in-memory only.
+- JSON on disk is pretty-printed and human-readable.
+
+Example on disk:
+
+```json
+[
+  {"id": 1, "name": "Neel", "age": 30},
+  {"id": 2, "name": "Bea", "age": 25}
+]
 ```
 
 ---
 
-### `add_many(docs: list[dict])`
-Add multiple documents at once.
+## Start Here
+
+### CollectionManager
+
+Constructor:
 ```python
-users.add_many([{...}, {...}])
+CollectionManager(name: str, path: str | None = None)
 ```
 
----
+#### Insertion
 
-### `where(field: str)`
-Start a query by targeting a field.
 ```python
-users.where("email").eq("user@example.com").first()
+add(document: dict) -> {"inserted": 1}
+add_many(docs: list[dict]) -> {"inserted": N}
 ```
 
----
-
-### `match_any(*conditions)`
-Match if **any** of the given conditions are true.
+**Examples**
 ```python
-orders.match_any(
-    lambda q: q.where("status").eq("pending"),
-    lambda q: q.where("total").gt(100)
-)
+users.add({"id": 4, "name": "Drew"})
+users.add_many([{"id": 5}, {"id": 6, "active": True}])
 ```
 
----
+#### Query entrypoints
 
-### `match_all(*conditions)`
-Match if **all** of the given conditions are true.
 ```python
-orders.match_all(
-    lambda q: q.where("status").ne("cancelled"),
-    lambda q: q.where("total").gte(60)
-)
+where(field: str) -> QueryBuilder
+match_any(*builders) -> QueryBuilder   # OR across sub-queries
+match_all(*builders) -> QueryBuilder   # AND across sub-queries
+not_any(*builders)  -> QueryBuilder    # NOT( OR(sub-queries) )
 ```
 
----
-
-### `not_any(*conditions)`
-Negated OR condition — exclude if **any** condition is true.
+**Examples**
 ```python
-orders.not_any(
-    lambda q: q.where("status").eq("cancelled"),
-    lambda q: q.where("status").eq("pending")
-)
+# where + eq
+users.where("name").eq("Neel").first()
+
+# match_any
+users.match_any(
+    lambda q: q.where("age").gt(35),
+    lambda q: q.where("name").eq("Bea")
+).run().as_list()
+
+# match_all
+users.match_all(
+    lambda q: q.where("age").gte(25),
+    lambda q: q.where("age").lt(40)
+).count()
+
+# not_any
+users.not_any(
+    lambda q: q.where("name").eq("Neel"),
+    lambda q: q.where("age").eq(40)
+).run().as_list()
 ```
 
----
+#### Aggregations (collection-level helpers)
 
-### `lookup(foreign_collection_name, local_key, foreign_key, as_field)`
-Join another collection on a key, similar to SQL `JOIN`.
 ```python
-orders.lookup("users", local_key="user_id", foreign_key="id", as_field="user")
+sum(field: str) -> number
+avg(field: str) -> float
+min(field: str) -> number | None
+max(field: str) -> number | None
+count() -> int
+first() -> dict | None
 ```
 
----
-
-### `merge(fn)`
-Enrich documents by merging additional fields computed from the joined data.
+**Examples**
 ```python
-.merge(lambda doc: {"customer": doc["user"]["name"]})
+users.sum("age")      # 95
+users.avg("age")      # 31.66...
+users.min("age")      # 25
+users.max("age")      # 40
+users.count()         # 3
+users.first()         # first document in the collection
 ```
 
----
+#### Maintenance & IO
 
-### `sum(field)`, `avg(field)`, `min(field)`, `max(field)`
-Run aggregation functions on numeric fields.
 ```python
-orders.sum("total")
-orders.avg("total")
+clear() -> {"cleared": N}
+export(path: str) -> None
+import_(path: str) -> None
+save(path: str) -> None
+all() -> list[dict]
+all_docs() -> list[dict]
 ```
 
----
-
-### `first()`
-Return the first matched document or `None`.
-
----
-
-### `count()`
-Return count of matched documents.
-
----
-
-### `all_docs()`, `all()`
-Return all documents in the collection as a list.
-
----
-
-### `clear()`
-Deletes all documents in the collection.
-
----
-
-### `export(path: str)`
-Export current documents to a JSON file.
-
----
-
-### `import_(path: str)`
-Import documents from a JSON file, replacing current contents.
-
----
-
-### `save(path: str)`
-Save current state of documents to specified file (manual override).
-
----
-
-## 🔎 Query Filters & Operators
-
-After `.where(field)`, chain any of the following:
-
-### Comparison
-
-| Operator       | Description                           |
-|----------------|---------------------------------------|
-| `.eq(value)`   | Equals                                |
-| `.ne(value)`   | Not equals                            |
-| `.gt(value)`   | Greater than                          |
-| `.gte(value)`  | Greater than or equal                 |
-| `.lt(value)`   | Less than                             |
-| `.lte(value)`  | Less than or equal                    |
-| `.in_([...])`  | Value in list                         |
-| `.nin([...])`  | Value not in list                     |
-| `.matches(rx)` | Regex match on field as string        |
-| `.exists()`    | Field exists in document              |
-
-Example:
+**Examples**
 ```python
-orders.where("total").gt(100).count()
-```
-
----
-
-### Execution Methods
-
-| Method          | Description                                 |
-|------------------|---------------------------------------------|
-| `.run()`         | Run query and return a `DocList`            |
-| `.update({...})` | Update matched documents                    |
-| `.delete()`      | Delete matched documents                    |
-| `.replace({...})`| Replace matched documents entirely          |
-
----
-
-### Aggregates on filtered results
-
-```python
-orders.where("status").eq("delivered").sum("total")
-```
-
----
-
-## 📄 DocList Object
-
-Returned by `.run()`, it's an enhanced list of documents.
-
-### `.as_list()`
-Returns raw list of dicts.
-
----
-
-### `.to_json(path: str)`
-Save results as JSON.
-
----
-
-### `__repr__()`
-Pretty tabular printout of documents.
-
----
-
-## 🔄 Example Workflow
-
-```python
-users = db("users", path="users_data.json")
-orders = db("orders", path="orders_data.json")
-
-# Clear all data
+users.export("backup/users_export.json")
 users.clear()
-orders.clear()
+users.import_("backup/users_export.json")
+```
 
-# Add documents
+---
+
+### QueryBuilder
+
+You get a `QueryBuilder` from a collection via `where`, `match_any`, `match_all`, or `not_any`.
+
+#### Field selection
+
+```python
+where(field: str) -> QueryBuilder
+```
+
+Supports **dot-notation** for nested fields.
+
+**Examples**
+```python
+users.where("name").eq("Neel")
+users.where("address.city").eq("Indy")
+users.where("profile.stats.score").gte(9000)
+```
+
+#### Comparison operators
+
+```python
+eq(value)
+ne(value)
+gt(value)     # numeric
+gte(value)
+lt(value)
+lte(value)
+in_(values: list)
+nin(values: list)
+matches(regex: str)   # regex on string value
+exists()
+```
+
+**Examples**
+```python
+# equality
+users.where("name").eq("Neel").count()
+
+# numeric ranges
+users.where("age").gte(25).where("age").lt(40).run()
+
+# membership
+users.where("name").in_(["Neel", "Bea"]).run()
+
+# regex
+users.where("email").matches(r"@a\.com$").run()
+
+# existence (nested ok)
+users.where("address.city").exists().run()
+```
+
+#### Logic grouping
+
+```python
+_and(*builders)   # all sub-queries must match
+_or(*builders)    # any sub-query matches
+_not(*builders)   # negates the AND of each sub-query
+```
+
+**Examples**
+```python
+# _and
+q = users.where("age").gte(25)
+q._and(lambda s: s.where("name").ne("Carl"))
+q.run().as_list()
+
+# _or with two branches
+q = users._and(  # seed with no filters, then group
+    lambda s: s.where("age").gt(35),
+    lambda s: s.where("name").eq("Bea")
+)
+
+# Equivalent with collection helpers:
+users.match_any(
+    lambda s: s.where("age").gt(35),
+    lambda s: s.where("name").eq("Bea")
+).run().as_list()
+
+# _not – exclude anyone under 30
+users.where("age").lt(30)        # build the inner condition
+# negate using collection helper
+users.not_any(lambda s: s.where("age").lt(30)).run().as_list()
+```
+
+#### Execution
+
+```python
+run(fields: list[str] | None = None) -> DocList
+count() -> int
+first() -> dict | None
+```
+
+`run(fields=[...])` performs **projection**. Fields can be nested (`"a.b.c"`). Returned keys are the field names you requested.
+
+**Examples**
+```python
+users.where("age").gte(25).run(fields=["id", "name"]).as_list()
+# -> [{'id': 1, 'name': 'Neel'}, {'id': 2, 'name': 'Bea'}, ...]
+
+users.where("address.city").exists().run(fields=["id", "address.city"]).as_list()
+# -> [{'id': 1, 'address.city': 'Indy'}, {'id': 2, 'address.city': 'Austin'}]
+```
+
+#### Mutation
+
+```python
+update(changes: dict) -> {"updated": N}
+delete() -> {"deleted": N}
+replace(new_doc: dict) -> {"replaced": N}
+```
+
+**Examples**
+```python
+# mark all under 30 as junior
+users.where("age").lt(30).update({"rank": "junior"})
+
+# delete by name
+users.where("name").eq("Carl").delete()
+
+# replace exact matches
+users.where("id").eq(2).replace({"id": 2, "name": "Bea Updated"})
+```
+
+#### Aggregations (query-scoped)
+
+These work **after** filtering:
+```python
+sum(field)
+avg(field)
+min(field)
+max(field)
+```
+
+**Examples**
+```python
+# average age for people with an email at a.com
+users.where("email").matches("@a\\.com$").avg("age")
+```
+
+#### Lookup (one-to-one join) and Merge
+
+```python
+lookup(foreign_collection_name, local_key, foreign_key, as_field) -> QueryBuilder
+merge(fn: callable) -> QueryBuilder
+```
+
+- `lookup` runs the current query, matches each result to documents in another collection by key equality, and attaches the matched doc at `as_field`.
+- `merge` transforms each (possibly looked-up) document by merging in fields returned from `fn(doc)`.
+
+**Example**
+
+```python
+users = CollectionManager("users")
+orders = CollectionManager("orders")
+
+users.clear(); orders.clear()
 users.add_many([
     {"id": 1, "name": "Neel"},
-    {"id": 2, "name": "Tanaya"}
+    {"id": 2, "name": "Bea"},
 ])
-
 orders.add_many([
-    {"order_id": 101, "user_id": 1, "total": 100},
-    {"order_id": 102, "user_id": 2, "total": 200}
+    {"order_id": 10, "user_id": 1, "total": 50},
+    {"order_id": 11, "user_id": 1, "total": 75},
+    {"order_id": 12, "user_id": 2, "total": 20}
 ])
 
-# Filter and join
-result = (
-    orders
-    .lookup("users", local_key="user_id", foreign_key="id", as_field="user")
-    .merge(lambda o: {"customer": o["user"]["name"]})
-    .run()
+# Build a quick index map of the latest order per user_id for demo simplicity
+# (lookup here is one-to-one; if you need one-to-many, extend the engine)
+latest_by_user = {}
+for o in orders.all_docs():
+    latest_by_user[o["user_id"]] = o
+orders_latest = CollectionManager("orders_latest")
+orders_latest.clear()
+orders_latest.add_many(list(latest_by_user.values()))
+
+# Join and merge
+out = (
+    users.where("id").in_([1, 2])
+         .lookup("orders_latest", local_key="id", foreign_key="user_id", as_field="latest_order")
+         .merge(lambda d: {"latest_total": d.get("latest_order", {}).get("total", 0)})
+         .run()
+         .as_list()
 )
 
-print(result)
+# -> [
+#   {'id': 1, 'name': 'Neel', 'latest_order': {'order_id': 11, 'user_id': 1, 'total': 75}, 'latest_total': 75},
+#   {'id': 2, 'name': 'Bea',  'latest_order': {'order_id': 12, 'user_id': 2, 'total': 20}, 'latest_total': 20}
+# ]
 ```
+
+> Note: `lookup` in this engine is **one-to-one**. If you need one-to-many, you can adapt it by collecting a list of foreign matches per document.
 
 ---
 
-## 🧪 Testing Queries
+### DocList
+
+A lightweight wrapper around a list of documents.
 
 ```python
-orders.where("total").gt(100).count()
-users.where("email").matches(r".*@b.com").first()
-orders.match_all(
-    lambda q: q.where("total").gte(100),
-    lambda q: q.where("status").ne("cancelled")
-)
+as_list() -> list[dict]
+to_json(path: str) -> None
+len(doclist) -> int
+doclist[0]      # indexing
+for d in doclist: ...
+repr(doclist)   # pretty table-like output
+```
+
+**Examples**
+```python
+res = users.where("age").gte(25).run(fields=["id", "name"])
+print(len(res))             # -> 3
+print(res[0]["name"])       # -> 'Neel'
+print(res.as_list())        # -> [{'id': 1, 'name': 'Neel'}, ...]
+res.to_json("out.json")
+print(res)                  # pretty-printed rows
 ```
 
 ---
 
-## 📂 File Storage
+## Error Handling
 
-Each collection uses a separate `.json` file specified in `db(name, path="...")`. You can export, import, or inspect these directly.
-
----
-
-## 🧼 Clean Design Principles
-
-- Pure Python, no external dependencies.
-- In-memory with optional disk persistence.
-- Chainable DSL, optimized for readability.
-- Suitable for CLI tools, prototyping, desktop apps.
+- This engine intentionally avoids raising on missing fields — comparisons on missing values simply **don’t match**.
+- `exists()` checks presence, not truthiness.
+- Numeric comparisons only apply to numeric values; non-numeric values fail the predicate.
 
 ---
 
-## 🧱 Roadmap Ideas
+## Performance & Limits
 
-- Indexing support
-- Pagination `.limit()`, `.skip()`
-- Schema validation
-- TTL / expiring docs
-- Built-in encryption (optional)
+- **No indexes**; all queries scan the list.
+- Fine for thousands to tens of thousands of documents on a laptop; beyond that, consider indexing or a real database.
+- Single-process only; no file locking or transactions.
+
+---
+
+## Example: end-to-end
+
+```python
+from coffy.nosql import db
+
+users = db("users", path="data/users.json")
+users.clear()
+users.add_many([
+    {"id": 1, "name": "Neel", "age": 30, "address": {"city": "Indy"}},
+    {"id": 2, "name": "Bea",  "age": 25, "address": {"city": "Austin"}},
+    {"id": 3, "name": "Carl", "age": 40}
+])
+
+# People with address, projected
+print(users.where("address.city").exists().run(fields=["id", "address.city"]).as_list())
+
+# Age 25-39
+print(users.where("age").gte(25).where("age").lt(40).run().as_list())
+
+# NOT (age < 30 OR name == 'Carl')
+print(users.not_any(
+    lambda q: q.where("age").lt(30),
+    lambda q: q.where("name").eq("Carl"),
+).run().as_list())
+
+# Mutations
+users.where("name").eq("Neel").update({"role": "admin"})
+users.where("name").eq("Carl").delete()
+
+# Aggregates
+print(users.sum("age"), users.avg("age"))
+```

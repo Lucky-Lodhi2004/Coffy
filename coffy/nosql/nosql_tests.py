@@ -1,3 +1,6 @@
+# coffy/nosql/nosql_tests.py
+# author: nsarathy
+
 import unittest
 from engine import CollectionManager
 

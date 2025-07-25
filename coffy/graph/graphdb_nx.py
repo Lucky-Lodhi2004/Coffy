@@ -1,3 +1,6 @@
+# coffy/graph/graphdb_nx.py
+# author: nsarathy
+
 import networkx as nx
 import json
 import os

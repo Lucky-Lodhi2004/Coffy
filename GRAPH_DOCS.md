@@ -1,4 +1,4 @@
-# GraphDB (NetworkX-backed)
+# GraphDB
 
 A lightweight, Cypher-inspired graph engine built on top of `networkx`.  
 Supports labeled nodes, typed relationships, projections, conditional filtering, directional traversals, and JSON persistence.
@@ -7,12 +7,11 @@ Supports labeled nodes, typed relationships, projections, conditional filtering,
 
 ## Table of Contents
 - [Features](#features)
-- [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Persistence](#persistence)
 - [Data Model](#data-model)
 - [Conditions](#conditions)
-- [API](#api)
+- [Start Here](#start-here)
   - [Constructor](#constructor)
   - [Node operations](#node-operations)
   - [Relationship operations](#relationship-operations)
@@ -25,8 +24,6 @@ Supports labeled nodes, typed relationships, projections, conditional filtering,
   - [Saving query results](#saving-query-results)
 - [Examples](#examples)
 - [Limitations and notes](#limitations-and-notes)
-- [Testing](#testing)
-- [License](#license)
 
 ## Features
 - Nodes with **labels** and arbitrary properties
@@ -93,7 +90,7 @@ Use keyword filters in `find_*` methods.
   - `_logic="or"` combines predicates with OR
   - `_logic="not"` negates the combined result
 
-## API
+## Start Here
 
 ### Constructor
 
@@ -394,7 +391,7 @@ db.save_query_result(people, "people.json")
 ## Examples
 
 ```python
-from graphdb_nx import GraphDB
+from coffy.graph import GraphDB
 
 db = GraphDB(path="graph_data/people.json")
 db.add_node("A", labels="Person", name="Alice", age=30)
