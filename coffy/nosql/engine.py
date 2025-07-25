@@ -165,18 +165,17 @@ class QueryBuilder:
 _collection_registry = {}
 
 class CollectionManager:
-    DEFAULT_DIR = os.path.join(os.getcwd(), "nosql_data")
 
     def __init__(self, name: str, path: str = None):
         self.name = name
         self.in_memory = False
 
         if path:
+            if not path.endswith(".json"):
+                raise ValueError("Path must be to a .json file")
             self.path = path
         else:
-            os.makedirs(self.DEFAULT_DIR, exist_ok=True)
-            self.path = os.path.join(self.DEFAULT_DIR, f"{name}.json")
-            self.in_memory = True if name == ":memory:" else False
+            self.in_memory = True
 
         self.documents = []
         self._load()
@@ -190,6 +189,7 @@ class CollectionManager:
                 with open(self.path, 'r', encoding='utf-8') as f:
                     self.documents = json.load(f)
             except FileNotFoundError:
+                os.makedirs(os.path.dirname(self.path), exist_ok=True)
                 self.documents = []
 
     def _save(self):
