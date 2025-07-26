@@ -12,3 +12,6 @@ def init(path: str = None):
 def query(sql: str):
     """Execute a SQL query and return the results."""
     return execute_query(sql)
+
+
+__all__ = ["init", "query", "execute_query", "initialize"]

@@ -11,8 +11,7 @@ import unittest
 class TestGraphDB(unittest.TestCase):
 
     def setUp(self):
-        self.temp_path = tempfile.NamedTemporaryFile(
-            delete=False, suffix=".json").name
+        self.temp_path = tempfile.NamedTemporaryFile(delete=False, suffix=".json").name
         self.db = GraphDB(path=self.temp_path)
         self.db.add_node("A", labels="Person", name="Alice", age=30)
         self.db.add_node("B", labels="Person", name="Bob", age=25)
@@ -87,8 +86,7 @@ class TestGraphDB(unittest.TestCase):
         self.assertEqual(len(results), 3)
 
     def test_find_relationships_type_and_filter(self):
-        results = self.db.find_relationships(
-            rel_type="KNOWS", since={"gte": 2011})
+        results = self.db.find_relationships(rel_type="KNOWS", since={"gte": 2011})
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["target"], "C")
 
@@ -102,25 +100,24 @@ class TestGraphDB(unittest.TestCase):
 
     def test_match_node_path(self):
         pattern = [{"rel_type": "KNOWS", "node": {"name": "Bob"}}]
-        paths = self.db.match_node_path(
-            start={"name": "Alice"}, pattern=pattern)
+        paths = self.db.match_node_path(start={"name": "Alice"}, pattern=pattern)
         self.assertEqual(len(paths), 1)
         self.assertEqual(paths[0][0]["name"], "Alice")
         self.assertEqual(paths[0][1]["name"], "Bob")
 
     def test_match_full_path(self):
-        pattern = [{"rel_type": "KNOWS", "node": {"name": "Bob"}},
-                   {"rel_type": "KNOWS", "node": {"name": "Carol"}}]
-        results = self.db.match_full_path(
-            start={"name": "Alice"}, pattern=pattern)
+        pattern = [
+            {"rel_type": "KNOWS", "node": {"name": "Bob"}},
+            {"rel_type": "KNOWS", "node": {"name": "Carol"}},
+        ]
+        results = self.db.match_full_path(start={"name": "Alice"}, pattern=pattern)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["nodes"][2]["name"], "Carol")
         self.assertEqual(results[0]["relationships"][0]["type"], "KNOWS")
 
     def test_match_path_structured(self):
         pattern = [{"rel_type": "KNOWS", "node": {"name": "Bob"}}]
-        result = self.db.match_path_structured(
-            start={"name": "Alice"}, pattern=pattern)
+        result = self.db.match_path_structured(start={"name": "Alice"}, pattern=pattern)
         self.assertEqual(len(result), 1)
         path = result[0]["path"]
         self.assertEqual(path[0]["node"]["name"], "Alice")
@@ -143,5 +140,4 @@ class TestGraphDB(unittest.TestCase):
         os.remove(temp_result_path)
 
 
-unittest.TextTestRunner().run(
-    unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
+unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))

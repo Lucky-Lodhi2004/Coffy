@@ -47,18 +47,21 @@ class SQLDict(Sequence):
 
         # Get all column names
         columns = list(self._data[0].keys())
-        col_widths = {col: max(
-            len(col), *(len(str(row[col])) for row in self._data)) for col in columns}
+        col_widths = {
+            col: max(len(col), *(len(str(row[col])) for row in self._data))
+            for col in columns
+        }
 
         # Header
         header = " | ".join(f"{col:<{col_widths[col]}}" for col in columns)
-        line = "-+-".join('-' * col_widths[col] for col in columns)
+        line = "-+-".join("-" * col_widths[col] for col in columns)
 
         # Rows
         rows = []
         for row in self._data:
             row_str = " | ".join(
-                f"{str(row[col]):<{col_widths[col]}}" for col in columns)
+                f"{str(row[col]):<{col_widths[col]}}" for col in columns
+            )
             rows.append(row_str)
 
         return f"{header}\n{line}\n" + "\n".join(rows)
@@ -78,7 +81,7 @@ class SQLDict(Sequence):
         if not self._data:
             raise ValueError("No data to write.")
 
-        with open(path, mode='w', newline='', encoding='utf-8') as file:
+        with open(path, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=self._data[0].keys())
             writer.writeheader()
             writer.writerows(self._data)
@@ -91,5 +94,5 @@ class SQLDict(Sequence):
         if not self._data:
             raise ValueError("No data to write.")
 
-        with open(path, mode='w', encoding='utf-8') as file:
+        with open(path, mode="w", encoding="utf-8") as file:
             json.dump(self._data, file, indent=4)

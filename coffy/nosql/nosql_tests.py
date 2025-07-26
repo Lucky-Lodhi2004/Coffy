@@ -10,11 +10,13 @@ class TestCollectionManager(unittest.TestCase):
     def setUp(self):
         self.col = CollectionManager(name="test_collection")
         self.col.clear()
-        self.col.add_many([
-            {"name": "Alice", "age": 30, "tags": ["x", "y"]},
-            {"name": "Bob", "age": 25, "tags": ["y", "z"]},
-            {"name": "Carol", "age": 40, "nested": {"score": 100}},
-        ])
+        self.col.add_many(
+            [
+                {"name": "Alice", "age": 30, "tags": ["x", "y"]},
+                {"name": "Bob", "age": 25, "tags": ["y", "z"]},
+                {"name": "Carol", "age": 40, "nested": {"score": 100}},
+            ]
+        )
 
     def test_add_and_all_docs(self):
         result = self.col.all_docs()
@@ -54,20 +56,17 @@ class TestCollectionManager(unittest.TestCase):
 
     def test_logic_and_or_not(self):
         q = self.col.match_all(
-            lambda q: q.where("age").gte(25),
-            lambda q: q.where("age").lt(40)
+            lambda q: q.where("age").gte(25), lambda q: q.where("age").lt(40)
         )
         self.assertEqual(q.count(), 2)
 
         q = self.col.match_any(
-            lambda q: q.where("name").eq("Alice"),
-            lambda q: q.where("name").eq("Bob")
+            lambda q: q.where("name").eq("Alice"), lambda q: q.where("name").eq("Bob")
         )
         self.assertEqual(q.count(), 2)
 
         q = self.col.not_any(
-            lambda q: q.where("name").eq("Bob"),
-            lambda q: q.where("age").eq(40)
+            lambda q: q.where("name").eq("Bob"), lambda q: q.where("age").eq(40)
         )
         self.assertEqual(q.count(), 1)
         self.assertEqual(q.first()["name"], "Alice")
@@ -104,4 +103,5 @@ class TestCollectionManager(unittest.TestCase):
 
 
 unittest.TextTestRunner().run(
-    unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager))
+    unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager)
+)
