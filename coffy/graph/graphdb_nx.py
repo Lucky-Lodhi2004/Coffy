@@ -60,10 +60,10 @@ class GraphDB:
         """
         for node in nodes:
             node_id = node["id"]
-            labels = node.get("labels") or node.get(
-                "_labels")  # Accept either form
-            attrs = {k: v for k, v in node.items() if k not in [
-                "id", "labels", "_labels"]}
+            labels = node.get("labels") or node.get("_labels")  # Accept either form
+            attrs = {
+                k: v for k, v in node.items() if k not in ["id", "labels", "_labels"]
+            }
             self.add_node(node_id, labels=labels, **attrs)
 
     def get_node(self, node_id):
@@ -87,7 +87,9 @@ class GraphDB:
             elif direction == "in":
                 return self.g.predecessors(node_id)
             elif direction == "any":
-                return set(self.g.successors(node_id)).union(self.g.predecessors(node_id))
+                return set(self.g.successors(node_id)).union(
+                    self.g.predecessors(node_id)
+                )
             else:
                 raise ValueError("Direction must be 'in', 'out', or 'any'")
         else:
@@ -124,8 +126,11 @@ class GraphDB:
             source = rel["source"]
             target = rel["target"]
             rel_type = rel.get("type") or rel.get("_type")
-            attrs = {k: v for k, v in rel.items() if k not in [
-                "source", "target", "type", "_type"]}
+            attrs = {
+                k: v
+                for k, v in rel.items()
+                if k not in ["source", "target", "type", "_type"]
+            }
             self.add_relationship(source, target, rel_type=rel_type, **attrs)
 
     def get_relationship(self, source, target):
@@ -199,8 +204,7 @@ class GraphDB:
         attrs -- Attributes to update.
         """
         if not self.has_relationship(source, target):
-            raise KeyError(
-                f"Relationship '{source}->{target}' does not exist.")
+            raise KeyError(f"Relationship '{source}->{target}' does not exist.")
         self.g.edges[source, target].update(attrs)
         self._persist()
 
@@ -246,8 +250,7 @@ class GraphDB:
         if not self.has_relationship(source, target):
             return None
         rel = self.get_relationship(source, target).copy()
-        rel.update({"source": source, "target": target,
-                   "type": rel.get("_type")})
+        rel.update({"source": source, "target": target, "type": rel.get("_type")})
         if fields is None:
             return rel
         return {k: rel[k] for k in fields if k in rel}
@@ -262,8 +265,10 @@ class GraphDB:
             Each node is projected using the specified fields.
         """
         return [
-            self.project_node(n, fields) for n, a in self.g.nodes(data=True)
-            if (label is None or label in a.get("_labels", [])) and self._match_conditions(a, conditions)
+            self.project_node(n, fields)
+            for n, a in self.g.nodes(data=True)
+            if (label is None or label in a.get("_labels", []))
+            and self._match_conditions(a, conditions)
         ]
 
     def find_by_label(self, label, fields=None):
@@ -275,7 +280,8 @@ class GraphDB:
             Each node is projected using the specified fields.
         """
         return [
-            self.project_node(n, fields) for n, a in self.g.nodes(data=True)
+            self.project_node(n, fields)
+            for n, a in self.g.nodes(data=True)
             if label in a.get("_labels", [])
         ]
 
@@ -289,8 +295,10 @@ class GraphDB:
             Each relationship is projected using the specified fields.
         """
         return [
-            self.project_relationship(u, v, fields) for u, v, a in self.g.edges(data=True)
-            if (rel_type is None or a.get("_type") == rel_type) and self._match_conditions(a, conditions)
+            self.project_relationship(u, v, fields)
+            for u, v, a in self.g.edges(data=True)
+            if (rel_type is None or a.get("_type") == rel_type)
+            and self._match_conditions(a, conditions)
         ]
 
     def find_by_relationship_type(self, rel_type, fields=None):
@@ -302,7 +310,8 @@ class GraphDB:
             Each relationship is projected using the specified fields.
         """
         return [
-            self.project_relationship(u, v, fields) for u, v, a in self.g.edges(data=True)
+            self.project_relationship(u, v, fields)
+            for u, v, a in self.g.edges(data=True)
             if a.get("_type") == rel_type
         ]
 
@@ -346,7 +355,9 @@ class GraphDB:
             return not all(results)
         return all(results)
 
-    def match_node_path(self, start, pattern, return_nodes=True, node_fields=None, direction="out"):
+    def match_node_path(
+        self, start, pattern, return_nodes=True, node_fields=None, direction="out"
+    ):
         """
         Match a path in the graph starting from a node.
         start -- Starting node conditions (e.g., {"name": "Alice"}).
@@ -365,7 +376,7 @@ class GraphDB:
                 pattern=pattern,
                 node_path=[s["id"]],
                 node_paths=node_paths,
-                direction=direction
+                direction=direction,
             )
 
         unique_paths = list({tuple(p) for p in node_paths})
@@ -404,9 +415,12 @@ class GraphDB:
             if neighbor in node_path:  # avoid cycles
                 continue
             self._match_node_path(
-                neighbor, pattern[1:], node_path + [neighbor], node_paths, direction)
+                neighbor, pattern[1:], node_path + [neighbor], node_paths, direction
+            )
 
-    def match_full_path(self, start, pattern, node_fields=None, rel_fields=None, direction="out"):
+    def match_full_path(
+        self, start, pattern, node_fields=None, rel_fields=None, direction="out"
+    ):
         """
         Match a full path in the graph starting from a node.
         start -- Starting node conditions (e.g., {"name": "Alice"}).
@@ -425,18 +439,28 @@ class GraphDB:
                 relationship_path=[],
                 node_path=[s["id"]],
                 matched_paths=matched_paths,
-                direction=direction
+                direction=direction,
             )
 
         return [
             {
                 "nodes": [self.project_node(n, node_fields) for n in nodes],
-                "relationships": [self.project_relationship(u, v, rel_fields) for u, v in path]
+                "relationships": [
+                    self.project_relationship(u, v, rel_fields) for u, v in path
+                ],
             }
             for path, nodes in matched_paths
         ]
 
-    def _match_full_path(self, current_id, pattern, relationship_path, node_path, matched_paths, direction):
+    def _match_full_path(
+        self,
+        current_id,
+        pattern,
+        relationship_path,
+        node_path,
+        matched_paths,
+        direction,
+    ):
         """
         Recursive helper function to match a full path.
         current_id -- Current node ID.
@@ -469,10 +493,12 @@ class GraphDB:
                 relationship_path + [(current_id, neighbor)],
                 node_path + [neighbor],
                 matched_paths,
-                direction
+                direction,
             )
 
-    def match_path_structured(self, start, pattern, node_fields=None, rel_fields=None, direction="out"):
+    def match_path_structured(
+        self, start, pattern, node_fields=None, rel_fields=None, direction="out"
+    ):
         """
         Match a structured path in the graph starting from a node.
         start -- Starting node conditions (e.g., {"name": "Alice"}).
@@ -490,12 +516,14 @@ class GraphDB:
                 pattern=pattern,
                 path=[{"node": self.project_node(s["id"], node_fields)}],
                 structured_paths=structured_paths,
-                direction=direction
+                direction=direction,
             )
 
         return structured_paths
 
-    def _match_structured_path(self, current_id, pattern, path, structured_paths, direction):
+    def _match_structured_path(
+        self, current_id, pattern, path, structured_paths, direction
+    ):
         """
         Recursive helper function to match a structured path.
         current_id -- Current node ID.
@@ -523,17 +551,12 @@ class GraphDB:
                 continue
 
             extended_path = path + [
-                {"relationship": self.project_relationship(
-                    current_id, neighbor)},
-                {"node": self.project_node(neighbor)}
+                {"relationship": self.project_relationship(current_id, neighbor)},
+                {"node": self.project_node(neighbor)},
             ]
 
             self._match_structured_path(
-                neighbor,
-                pattern[1:],
-                extended_path,
-                structured_paths,
-                direction
+                neighbor, pattern[1:], extended_path, structured_paths, direction
             )
 
     # Export
@@ -542,7 +565,14 @@ class GraphDB:
         Get all nodes in the graph.
         Returns a list of dictionaries with node IDs, labels, and attributes.
         """
-        return [{"id": n, "labels": a.get("_labels", []), **{k: v for k, v in a.items() if k != "_labels"}} for n, a in self.g.nodes(data=True)]
+        return [
+            {
+                "id": n,
+                "labels": a.get("_labels", []),
+                **{k: v for k, v in a.items() if k != "_labels"},
+            }
+            for n, a in self.g.nodes(data=True)
+        ]
 
     def relationships(self):
         """
@@ -554,7 +584,7 @@ class GraphDB:
                 "source": u,
                 "target": v,
                 "type": a.get("_type"),
-                **{k: v for k, v in a.items() if k != "_type"}
+                **{k: v for k, v in a.items() if k != "_type"},
             }
             for u, v, a in self.g.edges(data=True)
         ]
@@ -565,10 +595,7 @@ class GraphDB:
         Returns a dictionary with "nodes" and "relationships" keys.
             Each key contains a list of nodes or relationships, respectively.
         """
-        return {
-            "nodes": self.nodes(),
-            "relationships": self.relationships()
-        }
+        return {"nodes": self.nodes(), "relationships": self.relationships()}
 
     def save(self, path=None):
         """
@@ -599,13 +626,17 @@ class GraphDB:
             data = json.load(f)
         self.g.clear()
         for node in data.get("nodes", []):
-            self.add_node(
-                node["id"], **{k: v for k, v in node.items() if k != "id"})
+            self.add_node(node["id"], **{k: v for k, v in node.items() if k != "id"})
         for rel in data.get("relationships", []):
             self.add_relationship(
-                rel["source"], rel["target"],
+                rel["source"],
+                rel["target"],
                 rel_type=rel.get("type") or rel.get("_type"),
-                **{k: v for k, v in rel.items() if k not in ["source", "target", "type", "_type"]}
+                **{
+                    k: v
+                    for k, v in rel.items()
+                    if k not in ["source", "target", "type", "_type"]
+                },
             )
 
     def save_query_result(self, result, path=None):

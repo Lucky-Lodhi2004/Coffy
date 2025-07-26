@@ -1,5 +1,7 @@
 # ☕ Coffy
 
+[![PyPI version](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
+
 **Coffy** is a lightweight embedded database engine for Python, designed for local-first apps, scripts, and tools. It includes:
 
 - `coffy.nosql`: A simple JSON-backed NoSQL engine with a fluent, chainable query interface  

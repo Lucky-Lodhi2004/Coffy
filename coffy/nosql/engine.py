@@ -37,7 +37,7 @@ class QueryBuilder:
         dotted_key -- A string representing the path to the value, e.g., "a.b.c".
         Returns the value if found, otherwise None.
         """
-        keys = dotted_key.split('.')
+        keys = dotted_key.split(".")
         for k in keys:
             if not isinstance(doc, dict) or k not in doc:
                 return None
@@ -60,7 +60,9 @@ class QueryBuilder:
         value -- The value to compare against.
         Returns self to allow method chaining.
         """
-        return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) == value)
+        return self._add_filter(
+            lambda d: QueryBuilder._get_nested(d, self.current_field) == value
+        )
 
     def ne(self, value):
         """
@@ -68,7 +70,9 @@ class QueryBuilder:
         value -- The value to compare against.
         Returns self to allow method chaining.
         """
-        return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) != value)
+        return self._add_filter(
+            lambda d: QueryBuilder._get_nested(d, self.current_field) != value
+        )
 
     def gt(self, value):
         """
@@ -77,8 +81,10 @@ class QueryBuilder:
         Returns self to allow method chaining.
         """
         return self._add_filter(
-            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (
-                int, float)) and QueryBuilder._get_nested(d, self.current_field) > value
+            lambda d: isinstance(
+                QueryBuilder._get_nested(d, self.current_field), (int, float)
+            )
+            and QueryBuilder._get_nested(d, self.current_field) > value
         )
 
     def gte(self, value):
@@ -88,8 +94,10 @@ class QueryBuilder:
         Returns self to allow method chaining.
         """
         return self._add_filter(
-            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (
-                int, float)) and QueryBuilder._get_nested(d, self.current_field) >= value
+            lambda d: isinstance(
+                QueryBuilder._get_nested(d, self.current_field), (int, float)
+            )
+            and QueryBuilder._get_nested(d, self.current_field) >= value
         )
 
     def lt(self, value):
@@ -99,8 +107,10 @@ class QueryBuilder:
         Returns self to allow method chaining.
         """
         return self._add_filter(
-            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (
-                int, float)) and QueryBuilder._get_nested(d, self.current_field) < value
+            lambda d: isinstance(
+                QueryBuilder._get_nested(d, self.current_field), (int, float)
+            )
+            and QueryBuilder._get_nested(d, self.current_field) < value
         )
 
     def lte(self, value):
@@ -110,8 +120,10 @@ class QueryBuilder:
         Returns self to allow method chaining.
         """
         return self._add_filter(
-            lambda d: isinstance(QueryBuilder._get_nested(d, self.current_field), (
-                int, float)) and QueryBuilder._get_nested(d, self.current_field) <= value
+            lambda d: isinstance(
+                QueryBuilder._get_nested(d, self.current_field), (int, float)
+            )
+            and QueryBuilder._get_nested(d, self.current_field) <= value
         )
 
     def in_(self, values):
@@ -131,8 +143,7 @@ class QueryBuilder:
         Returns self to allow method chaining.
         """
         return self._add_filter(
-            lambda d: QueryBuilder._get_nested(
-                d, self.current_field) not in values
+            lambda d: QueryBuilder._get_nested(d, self.current_field) not in values
         )
 
     def matches(self, regex):
@@ -141,15 +152,20 @@ class QueryBuilder:
         regex -- The regular expression to match against.
         Returns self to allow method chaining.
         """
-        return self._add_filter(lambda d: re.search(
-            regex, str(QueryBuilder._get_nested(d, self.current_field))))
+        return self._add_filter(
+            lambda d: re.search(
+                regex, str(QueryBuilder._get_nested(d, self.current_field))
+            )
+        )
 
     def exists(self):
         """
         Filter documents where the current field exists.
         Returns self to allow method chaining.
         """
-        return self._add_filter(lambda d: QueryBuilder._get_nested(d, self.current_field) is not None)
+        return self._add_filter(
+            lambda d: QueryBuilder._get_nested(d, self.current_field) is not None
+        )
 
     # Logic grouping
     def _and(self, *fns):
@@ -161,8 +177,7 @@ class QueryBuilder:
         for fn in fns:
             sub = QueryBuilder(self.documents, self.all_collections)
             fn(sub)
-            self.filters.append(
-                lambda d, fs=sub.filters: all(f(d) for f in fs))
+            self.filters.append(lambda d, fs=sub.filters: all(f(d) for f in fs))
         return self
 
     def _not(self, *fns):
@@ -174,8 +189,7 @@ class QueryBuilder:
         for fn in fns:
             sub = QueryBuilder(self.documents, self.all_collections)
             fn(sub)
-            self.filters.append(
-                lambda d, fs=sub.filters: not all(f(d) for f in fs))
+            self.filters.append(lambda d, fs=sub.filters: not all(f(d) for f in fs))
         return self
 
     def _or(self, *fns):
@@ -189,8 +203,7 @@ class QueryBuilder:
             sub = QueryBuilder(self.documents, self.all_collections)
             fn(sub)
             chains.append(sub.filters)
-        self.filters.append(lambda d: any(all(f(d)
-                            for f in chain) for chain in chains))
+        self.filters.append(lambda d: any(all(f(d) for f in chain) for chain in chains))
         return self
 
     # Add filter
@@ -214,8 +227,7 @@ class QueryBuilder:
             Otherwise, the full documents will be returned.
         Returns a DocList containing the matching documents.
         """
-        results = [doc for doc in self.documents if all(
-            f(doc) for f in self.filters)]
+        results = [doc for doc in self.documents if all(f(doc) for f in self.filters)]
         if self._lookup_done:
             results = self._lookup_results
 
@@ -250,8 +262,9 @@ class QueryBuilder:
         Returns a dictionary with the count of deleted documents.
         """
         before = len(self.documents)
-        self.documents[:] = [doc for doc in self.documents if not all(
-            f(doc) for f in self.filters)]
+        self.documents[:] = [
+            doc for doc in self.documents if not all(f(doc) for f in self.filters)
+        ]
         return {"deleted": before - len(self.documents)}
 
     def replace(self, new_doc):
@@ -289,7 +302,11 @@ class QueryBuilder:
         Returns the total sum of the field values.
             If no documents match or the field is not numeric, returns 0.
         """
-        return sum(doc.get(field, 0) for doc in self.run() if isinstance(doc.get(field), (int, float)))
+        return sum(
+            doc.get(field, 0)
+            for doc in self.run()
+            if isinstance(doc.get(field), (int, float))
+        )
 
     def avg(self, field):
         """
@@ -298,8 +315,11 @@ class QueryBuilder:
         Returns the average of the field values.
             If no documents match or the field is not numeric, returns 0.
         """
-        values = [doc.get(field) for doc in self.run()
-                  if isinstance(doc.get(field), (int, float))]
+        values = [
+            doc.get(field)
+            for doc in self.run()
+            if isinstance(doc.get(field), (int, float))
+        ]
         return sum(values) / len(values) if values else 0
 
     def min(self, field):
@@ -309,8 +329,11 @@ class QueryBuilder:
         Returns the minimum value of the field.
             If no documents match or the field is not numeric, returns None.
         """
-        values = [doc.get(field) for doc in self.run()
-                  if isinstance(doc.get(field), (int, float))]
+        values = [
+            doc.get(field)
+            for doc in self.run()
+            if isinstance(doc.get(field), (int, float))
+        ]
         return min(values) if values else None
 
     def max(self, field):
@@ -320,8 +343,11 @@ class QueryBuilder:
         Returns the maximum value of the field.
             If no documents match or the field is not numeric, returns None.
         """
-        values = [doc.get(field) for doc in self.run()
-                  if isinstance(doc.get(field), (int, float))]
+        values = [
+            doc.get(field)
+            for doc in self.run()
+            if isinstance(doc.get(field), (int, float))
+        ]
         return max(values) if values else None
 
     # Lookup
@@ -403,7 +429,7 @@ class CollectionManager:
             self.documents = []
         else:
             try:
-                with open(self.path, 'r', encoding='utf-8') as f:
+                with open(self.path, "r", encoding="utf-8") as f:
                     self.documents = json.load(f)
             except FileNotFoundError:
                 os.makedirs(os.path.dirname(self.path), exist_ok=True)
@@ -415,7 +441,7 @@ class CollectionManager:
         If in_memory is True, this method does nothing.
         """
         if not self.in_memory:
-            with open(self.path, 'w', encoding='utf-8') as f:
+            with open(self.path, "w", encoding="utf-8") as f:
                 json.dump(self.documents, f, indent=4)
 
     def add(self, document: dict):
@@ -444,7 +470,9 @@ class CollectionManager:
         field -- The field to filter on.
         Returns a QueryBuilder instance to build the query.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).where(field)
+        return QueryBuilder(self.documents, all_collections=_collection_registry).where(
+            field
+        )
 
     def match_any(self, *conditions):
         """
@@ -480,7 +508,9 @@ class CollectionManager:
         kwargs -- Keyword arguments for the lookup.
         Returns a QueryBuilder instance with the lookup applied.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).lookup(*args, **kwargs)
+        return QueryBuilder(
+            self.documents, all_collections=_collection_registry
+        ).lookup(*args, **kwargs)
 
     def merge(self, *args, **kwargs):
         """
@@ -489,7 +519,9 @@ class CollectionManager:
         kwargs -- Keyword arguments for the merge.
         Returns a QueryBuilder instance with the merge applied.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).merge(*args, **kwargs)
+        return QueryBuilder(self.documents, all_collections=_collection_registry).merge(
+            *args, **kwargs
+        )
 
     def sum(self, field):
         """
@@ -552,7 +584,7 @@ class CollectionManager:
         Export the collection to a JSON file.
         path -- The file path to export the collection.
         """
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.documents, f, indent=4)
 
     def import_(self, path):
@@ -561,7 +593,7 @@ class CollectionManager:
         path -- The file path to import the collection from.
         If the file does not exist, it raises a FileNotFoundError.
         """
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             self.documents = json.load(f)
         self._save()
 
@@ -572,13 +604,6 @@ class CollectionManager:
         """
         return self.documents
 
-    def count(self):
-        """
-        Count the number of documents in the collection.
-        Returns the count of documents.
-        """
-        return len(self.documents)
-
     def save(self, path: str):
         """
         Save the current state of the collection to a JSON file.
@@ -587,7 +612,7 @@ class CollectionManager:
         """
         if not path.endswith(".json"):
             raise ValueError("Invalid file format. Please use a .json file.")
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.documents, f, indent=4)
 
     def all_docs(self):
