@@ -1,7 +1,7 @@
 # coffy/graph/graph_tests.py
 # author: nsarathy
 
-from graphdb_nx import GraphDB
+from coffy.graph import GraphDB
 import json
 import os
 import tempfile

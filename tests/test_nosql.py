@@ -1,14 +1,14 @@
 # coffy/nosql/nosql_tests.py
 # author: nsarathy
 
-from engine import CollectionManager
+from coffy.nosql import db
 import unittest
 
 
 class TestCollectionManager(unittest.TestCase):
 
     def setUp(self):
-        self.col = CollectionManager(name="test_collection")
+        self.col = db(collection_name="test_collection")
         self.col.clear()
         self.col.add_many(
             [
