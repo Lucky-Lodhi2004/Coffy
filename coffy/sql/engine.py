@@ -1,22 +1,38 @@
 # coffy/sql/engine.py
 # author: nsarathy
 
-import sqlite3
+"""
+Shameless SQLite wrapper.
+"""
+
 from .sqldict import SQLDict
+import sqlite3
 
 # Internal connection state
 _connection = None
 _cursor = None
 
+
 def initialize(db_path=None):
-    """Initialize the database connection."""
+    """
+    Initialize the SQL engine with the given database path.
+    db_path -- Path to the SQLite database file. If None, uses an in-memory
+    """
     global _connection, _cursor
     if _connection:
         return  # already initialized
-    _connection = sqlite3.connect(db_path or ":memory:") # Uses in-memory DB if no path provided
+    # Uses in-memory DB if no path provided
+    _connection = sqlite3.connect(db_path or ":memory:")
     _cursor = _connection.cursor()
 
+
 def execute_query(sql: str):
+    """
+    Execute a SQL query and return the results.
+    sql -- The SQL query to execute.
+    Returns SQLDict for SELECT queries or a status dict for other queries.
+    """
+    global _connection, _cursor
     if _connection is None:
         initialize()  # uses in-memory if not initialized
 
@@ -31,3 +47,14 @@ def execute_query(sql: str):
             return {"status": "success", "rows_affected": _cursor.rowcount}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+def close():
+    """Close the database connection."""
+    global _connection, _cursor
+    if _cursor:
+        _cursor.close()
+        _cursor = None
+    if _connection:
+        _connection.close()
+        _connection = None
