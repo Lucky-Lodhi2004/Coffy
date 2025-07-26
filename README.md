@@ -31,7 +31,7 @@ pip install coffy
 - Supports nested fields, logical filters, aggregations, projections, and joins
 - Built for local usage with optional persistence; minimal setup, fast iteration
 
-📄 [NoSQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/NOSQL_DOCS.md)
+📄 [NoSQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/NOSQL_DOCS.md)
 
 ---
 
@@ -41,7 +41,7 @@ pip install coffy
 - Supports pattern matching, label/type filtering, logical conditions, and projections
 - Query results can be saved, updated, or transformed; ideal for local, schema-flexible graph data
 
-📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/GRAPH_DOCS.md)
+📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
 
 ---
 
@@ -51,7 +51,7 @@ pip install coffy
 - Outputs as readable tables or exportable lists  
 - Uses in-memory DB by default, or json-based if initialized with a path  
 
-📄 [SQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/SQL_DOCS.md)
+📄 [SQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/SQL_DOCS.md)
 
 ---
 
