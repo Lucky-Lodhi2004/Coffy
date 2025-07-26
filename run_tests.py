@@ -5,6 +5,7 @@ import subprocess
 import sys
 import os
 
+
 def main():
     project_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,6 +16,7 @@ def main():
     # Step 2: Run tests using unittest
     print("\nRunning tests...")
     subprocess.check_call([sys.executable, "-m", "unittest", "discover", "tests"])
+
 
 if __name__ == "__main__":
     main()
