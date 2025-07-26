@@ -48,6 +48,8 @@ class GraphDB:
         labels -- Optional list of labels for the node.
         attrs -- Additional attributes for the node.
         """
+        if self.has_node(node_id):
+            raise KeyError(f"Node '{node_id}' already exists. Use update_node to modify it.")
         if labels is not None:
             attrs["_labels"] = labels if isinstance(labels, list) else [labels]
         self.g.add_node(node_id, **attrs)
