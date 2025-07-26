@@ -1,26 +1,90 @@
-# Contributing to Coffy
+# ☕ Contributing to Coffy
 
-Thanks for your interest in improving Coffy! 🎉
+Thanks for your interest in improving Coffy! We welcome contributions of all kinds — bug fixes, tests, features, or documentation. Follow the guidelines below to get started.
 
-## Getting Started
+---
 
-1. Fork and clone the repo.
-2. Create a new branch:  
-   `git checkout -b feature/your-feature-name`
-3. Install dependencies and run tests:  
-   `python -m unittest discover`
-4. Format code:  
-   `black coffy/`
-5. Lint code:  
-   `ruff check coffy/`
-6. Submit a pull request!
+## 🔧 Development Setup
 
-## Style Guide
+1. **Fork from the `dev` branch** (not `main`)
+2. **Create a branch** for your changes:
+   ```bash
+   git checkout -b feature/my-feature
+   ```
+   ❗ Do **not** include `dev` or `main` in your branch name.
 
-- Follow [PEP8](https://peps.python.org/pep-0008/) with **Black** for formatting and **Ruff** for linting.
-- Keep PRs minimal and focused.
-- Add tests and update docs where applicable.
+3. **Install dependencies** and test locally:
+   ```bash
+   pip install -e .
+   python run_tests.py
+   ```
 
-## Communication
+4. **Format your code with [Black](https://black.readthedocs.io/en/stable/)**:
+   ```bash
+   black coffy/
+   ```
+   Black enforces [PEP8](https://peps.python.org/pep-0008/) style automatically.
 
-Use [GitHub Discussions](https://github.com/nsarathy/Coffy/discussions) or open an issue for questions.
+5. **Lint your code using [Ruff](https://docs.astral.sh/ruff/)**:
+   ```bash
+   ruff check coffy/
+   ```
+
+6. **Commit and push to your fork**, then open a pull request **to the `dev` branch**.
+
+---
+
+## 🚦 Pull Request Guidelines
+
+- Target **`dev`**, not `main`.
+- Keep PRs small and focused — split large changes if necessary.
+- Add or update tests for any new behavior.
+- Update documentation if your changes affect usage.
+- Use clear and descriptive commit messages.
+- All tests must pass before merging.
+
+---
+
+## 📦 Publishing to PyPI
+
+Publishing is done from the `main` branch. When ready for release:
+
+- Open a pull request **from `dev` to `main`**
+- The maintainer will review, version, and publish the package
+
+**Note**: Only maintainers can merge to `main` or publish.
+
+---
+
+## 🧪 Running Tests
+
+Use the provided runner to install and test:
+
+```bash
+python run_tests.py
+```
+
+This will install Coffy in editable mode and run all unit tests in `tests/`.
+
+---
+
+## 🙋‍♀️ Where to Start
+
+See [Open Issues](https://github.com/nsarathy/Coffy/issues) for good first tasks:
+
+- 🟢 Label: [`good first issue`](https://github.com/nsarathy/Coffy/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+
+---
+
+## 📣 Communication
+
+- For questions or ideas, open a [GitHub Discussion](https://github.com/nsarathy/Coffy/discussions)
+- To report bugs or request features, [file an issue](https://github.com/nsarathy/Coffy/issues)
+
+---
+
+## 📜 Code of Conduct
+
+All contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Let's keep Coffy a friendly and inclusive space for everyone ☕✨
