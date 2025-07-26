@@ -1,8 +1,9 @@
 # coffy/nosql/nosql_tests.py
 # author: nsarathy
 
-import unittest
 from engine import CollectionManager
+import unittest
+
 
 class TestCollectionManager(unittest.TestCase):
 
@@ -101,4 +102,6 @@ class TestCollectionManager(unittest.TestCase):
         merged = q.merge(lambda d: {"new": d["age"] + 10}).run()
         self.assertEqual(merged[0]["new"], 40)
 
-unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager))
+
+unittest.TextTestRunner().run(
+    unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager))
