@@ -5,6 +5,7 @@
 A simple graph database using NetworkX.
 """
 
+from .graph_result import GraphResult
 import json
 import networkx as nx
 import os
@@ -268,12 +269,14 @@ class GraphDB:
         Returns a list of nodes that match the conditions.
             Each node is projected using the specified fields.
         """
-        return [
-            self.project_node(n, fields)
-            for n, a in self.g.nodes(data=True)
-            if (label is None or label in a.get("_labels", []))
-            and self._match_conditions(a, conditions)
-        ]
+        return GraphResult(
+            [
+                self.project_node(n, fields)
+                for n, a in self.g.nodes(data=True)
+                if (label is None or label in a.get("_labels", []))
+                and self._match_conditions(a, conditions)
+            ]
+        )
 
     def find_by_label(self, label, fields=None):
         """
@@ -283,11 +286,13 @@ class GraphDB:
         Returns a list of nodes that have the specified label.
             Each node is projected using the specified fields.
         """
-        return [
-            self.project_node(n, fields)
-            for n, a in self.g.nodes(data=True)
-            if label in a.get("_labels", [])
-        ]
+        return GraphResult(
+            [
+                self.project_node(n, fields)
+                for n, a in self.g.nodes(data=True)
+                if label in a.get("_labels", [])
+            ]
+        )
 
     def find_relationships(self, rel_type=None, fields=None, **conditions):
         """
@@ -298,12 +303,14 @@ class GraphDB:
         Returns a list of relationships that match the conditions.
             Each relationship is projected using the specified fields.
         """
-        return [
-            self.project_relationship(u, v, fields)
-            for u, v, a in self.g.edges(data=True)
-            if (rel_type is None or a.get("_type") == rel_type)
-            and self._match_conditions(a, conditions)
-        ]
+        return GraphResult(
+            [
+                self.project_relationship(u, v, fields)
+                for u, v, a in self.g.edges(data=True)
+                if (rel_type is None or a.get("_type") == rel_type)
+                and self._match_conditions(a, conditions)
+            ]
+        )
 
     def find_by_relationship_type(self, rel_type, fields=None):
         """
@@ -313,11 +320,13 @@ class GraphDB:
         Returns a list of relationships that have the specified type.
             Each relationship is projected using the specified fields.
         """
-        return [
-            self.project_relationship(u, v, fields)
-            for u, v, a in self.g.edges(data=True)
-            if a.get("_type") == rel_type
-        ]
+        return GraphResult(
+            [
+                self.project_relationship(u, v, fields)
+                for u, v, a in self.g.edges(data=True)
+                if a.get("_type") == rel_type
+            ]
+        )
 
     def _match_conditions(self, attrs, conditions):
         """
@@ -563,6 +572,120 @@ class GraphDB:
                 neighbor, pattern[1:], extended_path, structured_paths, direction
             )
 
+    # Aggregation methods
+
+    def count_nodes(self):
+        """
+        Count the number of nodes in the graph.
+        """
+        return self.g.number_of_nodes()
+
+    def count_relationships(self):
+        """
+        Count the number of relationships (edges) in the graph.
+        """
+        return self.g.number_of_edges()
+
+    def avg_degree(self):
+        """
+        Calculate the average degree of the nodes.
+        """
+        n = self.g.number_of_nodes()
+        return sum(dict(self.g.degree()).values()) / n if n > 0 else 0
+
+    def min_degree(self):
+        """
+        Find the minimum node degree in the graph.
+        """
+        degrees = list(dict(self.g.degree()).values())
+        return min(degrees) if degrees else 0
+
+    def max_degree(self):
+        """
+        Find the maximum node degree in the graph.
+        """
+        degrees = list(dict(self.g.degree()).values())
+        return max(degrees) if degrees else 0
+
+    def total_degree(self):
+        """
+        Return the sum of degrees of all nodes.
+        Equivalent to 2x number of edges in undirected graphs.
+        """
+        return sum(dict(self.g.degree()).values())
+
+    # Directed Graph Aggregations
+
+    def total_in_degree(self):
+        """
+        Return the total in-degree of all nodes (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        return sum(dict(self.g.in_degree()).values())
+
+    def total_out_degree(self):
+        """
+        Return the total out-degree of all nodes (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        return sum(dict(self.g.out_degree()).values())
+
+    def avg_in_degree(self):
+        """
+        Average in-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        n = self.g.number_of_nodes()
+        return sum(dict(self.g.in_degree()).values()) / n if n > 0 else 0
+
+    def min_in_degree(self):
+        """
+        Minimum in-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        degrees = list(dict(self.g.in_degree()).values())
+        return min(degrees) if degrees else 0
+
+    def max_in_degree(self):
+        """
+        Maximum in-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        degrees = list(dict(self.g.in_degree()).values())
+        return max(degrees) if degrees else 0
+
+    def avg_out_degree(self):
+        """
+        Average out-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        n = self.g.number_of_nodes()
+        return sum(dict(self.g.out_degree()).values()) / n if n > 0 else 0
+
+    def min_out_degree(self):
+        """
+        Minimum out-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        degrees = list(dict(self.g.out_degree()).values())
+        return min(degrees) if degrees else 0
+
+    def max_out_degree(self):
+        """
+        Maximum out-degree (only for directed graphs).
+        """
+        if not self.g.is_directed():
+            raise ValueError("Graph is not directed")
+        degrees = list(dict(self.g.out_degree()).values())
+        return max(degrees) if degrees else 0
+
     # Export
     def nodes(self):
         """
@@ -650,6 +773,7 @@ class GraphDB:
         path -- Path to the file where the result will be saved.
             If path is None, it will raise a ValueError.
         """
+        result = result.as_list() if hasattr(result, "as_list") else result
         if path is None:
             raise ValueError("No path specified to save the query result.")
         with open(path, "w", encoding="utf-8") as f:

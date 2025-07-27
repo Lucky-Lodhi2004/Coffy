@@ -19,6 +19,17 @@ class TestGraphDB(unittest.TestCase):
         self.db.add_relationship("A", "B", rel_type="KNOWS", since=2010)
         self.db.add_relationship("B", "C", rel_type="KNOWS", since=2015)
 
+        # Create directed graph
+        self.temp_path_directed = tempfile.NamedTemporaryFile(
+            delete=False, suffix="_directed.json"
+        ).name
+        self.directed_db = GraphDB(directed=True, path=self.temp_path_directed)
+        self.directed_db.add_node("A")
+        self.directed_db.add_node("B")
+        self.directed_db.add_node("C")
+        self.directed_db.add_relationship("A", "B", _type="KNOWS")
+        self.directed_db.add_relationship("B", "C", _type="KNOWS")
+
     def tearDown(self):
         os.remove(self.temp_path)
 
@@ -138,6 +149,50 @@ class TestGraphDB(unittest.TestCase):
             loaded = json.load(f)
         self.assertEqual(loaded[0]["name"], "Alice")
         os.remove(temp_result_path)
+
+    def test_graph_aggregations(self):
+        # Structural aggregations
+        self.assertEqual(self.db.count_nodes(), 3)
+        self.assertEqual(self.db.count_relationships(), 2)
+
+        # Degree distribution: A (1), B (2), C (1)
+        self.assertAlmostEqual(self.db.avg_degree(), 1.33, delta=0.01)
+        self.assertEqual(self.db.min_degree(), 1)
+        self.assertEqual(self.db.max_degree(), 2)
+
+    def test_graph_result_aggregates(self):
+        res = self.db.find_nodes(label="Person", fields=["name", "age"])
+        self.assertEqual(res.count(), 3)
+        self.assertEqual(res.sum("age"), 95)
+        self.assertEqual(res.avg("age"), 95 / 3)
+        self.assertEqual(res.min("age"), 25)
+        self.assertEqual(res.max("age"), 40)
+        self.assertEqual(res.first()["name"], "Alice")
+
+    def test_total_degree_undirected(self):
+        # A-B, B-C → degrees: A(1), B(2), C(1) → total = 4
+        self.assertEqual(self.db.total_degree(), 4)
+
+    def test_directed_degrees(self):
+        # Degrees:
+        # in-degrees: A(0), B(1), C(1)
+        # out-degrees: A(1), B(1), C(0)
+
+        self.assertEqual(self.directed_db.total_in_degree(), 2)
+        self.assertEqual(self.directed_db.avg_in_degree(), 2 / 3)
+        self.assertEqual(self.directed_db.min_in_degree(), 0)
+        self.assertEqual(self.directed_db.max_in_degree(), 1)
+
+        self.assertEqual(self.directed_db.total_out_degree(), 2)
+        self.assertEqual(self.directed_db.avg_out_degree(), 2 / 3)
+        self.assertEqual(self.directed_db.min_out_degree(), 0)
+        self.assertEqual(self.directed_db.max_out_degree(), 1)
+
+    def test_directed_degree_errors_on_undirected(self):
+        with self.assertRaises(ValueError):
+            self.db.total_in_degree()
+        with self.assertRaises(ValueError):
+            self.db.avg_out_degree()
 
 
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
