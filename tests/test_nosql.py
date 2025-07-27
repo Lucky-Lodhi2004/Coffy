@@ -2,6 +2,9 @@
 # author: nsarathy
 
 from coffy.nosql import db
+import json
+import os
+import tempfile
 import unittest
 
 
@@ -100,6 +103,73 @@ class TestCollectionManager(unittest.TestCase):
         q = self.col.where("name").eq("Alice")
         merged = q.merge(lambda d: {"new": d["age"] + 10}).run()
         self.assertEqual(merged[0]["new"], 40)
+
+    def test_lookup_and_merge_pipeline(self):
+        users = db("users")
+        orders = db("orders")
+        users.clear()
+        orders.clear()
+        users.add_many([{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}])
+        orders.add_many(
+            [
+                {"order_id": 101, "user_id": 1, "total": 50},
+                {"order_id": 102, "user_id": 1, "total": 70},
+                {"order_id": 103, "user_id": 2, "total": 20},
+            ]
+        )
+
+        # Only simulate one-to-one (latest order per user) manually
+        latest_by_user = {
+            103: {"user_id": 2, "total": 20},
+            102: {"user_id": 1, "total": 70},
+        }
+        db("latest_orders").clear()
+        db("latest_orders").add_many(list(latest_by_user.values()))
+
+        result = (
+            users.lookup(
+                "latest_orders",
+                local_key="id",
+                foreign_key="user_id",
+                as_field="latest",
+            )
+            .merge(lambda d: {"latest_total": d.get("latest", {}).get("total", 0)})
+            .run()
+            .as_list()
+        )
+        totals = {d["name"]: d["latest_total"] for d in result}
+        self.assertEqual(totals["Alice"], 70)
+        self.assertEqual(totals["Bob"], 20)
+
+    def test_doclist_to_json(self):
+        path = tempfile.NamedTemporaryFile(delete=False, suffix=".json").name
+        result = self.col.where("name").eq("Alice").run(fields=["name", "age"])
+        result.to_json(path)
+
+        with open(path) as f:
+            data = json.load(f)
+        self.assertEqual(data[0]["name"], "Alice")
+        os.remove(path)
+
+    def test_import_collection(self):
+        path = tempfile.NamedTemporaryFile(delete=False, suffix=".json").name
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump([{"name": "Imported", "age": 99}], f)
+
+        self.col.import_(path)
+        self.assertEqual(len(self.col.all()), 1)
+        self.assertEqual(self.col.first()["name"], "Imported")
+        os.remove(path)
+
+    def test_import_file_not_found(self):
+        with self.assertRaises(FileNotFoundError):
+            self.col.import_("nonexistent.json")
+
+    def test_replace_multiple_with_empty_doc(self):
+        result = self.col.where("age").gte(25).replace({})
+        self.assertEqual(result["replaced"], 3)
+        all_docs = self.col.all()
+        self.assertTrue(all(isinstance(d, dict) and not d for d in all_docs))
 
 
 unittest.TextTestRunner().run(

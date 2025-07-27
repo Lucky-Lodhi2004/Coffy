@@ -194,5 +194,50 @@ class TestGraphDB(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.db.avg_out_degree()
 
+    def test_degree(self):
+        self.assertEqual(self.db.degree("A"), 1)
+        self.assertEqual(self.db.degree("B"), 2)
+
+    def test_neighbors(self):
+        neighbors = self.db.neighbors("B")
+        self.assertIn("A", neighbors)
+        self.assertIn("C", neighbors)
+
+    def test_nodes_export(self):
+        nodes = self.db.nodes()
+        ids = [n["id"] for n in nodes]
+        self.assertIn("A", ids)
+        self.assertIn("B", ids)
+        self.assertIn("C", ids)
+
+    def test_relationships_export(self):
+        rels = self.db.relationships()
+        rel_pairs = [(r["source"], r["target"]) for r in rels]
+        self.assertIn(("A", "B"), rel_pairs)
+        self.assertIn(("B", "C"), rel_pairs)
+
+    def test_to_dict(self):
+        graph_dict = self.db.to_dict()
+        self.assertIn("nodes", graph_dict)
+        self.assertIn("relationships", graph_dict)
+        self.assertEqual(len(graph_dict["nodes"]), 3)
+        self.assertEqual(len(graph_dict["relationships"]), 2)
+
+    def test_load_empty_file(self):
+        empty_path = self.temp_path.replace(".json", "_empty.json")
+        with open(empty_path, "w", encoding="utf-8") as f:
+            f.write("")  # empty file
+        db2 = GraphDB(path=empty_path)
+        self.assertEqual(db2.count_nodes(), 0)
+        os.remove(empty_path)
+
+    def test_load_malformed_json(self):
+        bad_path = self.temp_path.replace(".json", "_bad.json")
+        with open(bad_path, "w", encoding="utf-8") as f:
+            f.write("{ not: valid }")
+        with self.assertRaises(json.JSONDecodeError):
+            GraphDB(path=bad_path)
+        os.remove(bad_path)
+
 
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
