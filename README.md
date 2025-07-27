@@ -9,13 +9,6 @@
 - `coffy.sql`: A wrapper over `SQLite` for executing raw SQL  
 
 ---
-## Latest Updates
-- Added projection and dot-notation support for nested fields in NoSQL queries. Expanded logic chaining (`_and`, `_or`, `_not`) with improved test and better query semantics.
-- GraphDB now supports saving query results, fixed relationship type serialization, and added more robust unit coverage.
-- Unit tests added to test NoSQL and Graph database features.
-- Documentation Updated.
-
----
 
 ## 🔧 Install
 

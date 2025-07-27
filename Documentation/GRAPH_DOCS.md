@@ -19,6 +19,8 @@ Supports labeled nodes, typed relationships, projections, conditional filtering,
   - [Update and upsert](#update-and-upsert)
   - [Projection](#projection)
   - [Find functions](#find-functions)
+  - [GraphResult](#graphresult)
+  - [Field Level Aggregations](#field-level-aggregations)
   - [Pattern matching](#pattern-matching)
   - [Export](#export)
   - [Saving query results](#saving-query-results)
@@ -205,6 +207,30 @@ db.has_node("U1")
 db.has_relationship("U1", "U2")
 ```
 
+#### Graph-Level Aggregations
+The following methods provide quick graph-wide statistics:
+
+```python
+db.count_nodes()          # → total number of nodes
+db.count_relationships()  # → total number of relationships (edges)
+db.avg_degree()           # → average node degree
+db.min_degree()           # → minimum node degree
+db.max_degree()           # → maximum node degree
+db.total_degree()         # → sum of all node degrees
+
+# Directed graphs only:
+db.total_in_degree()      # → sum of in-degrees across all nodes
+db.total_out_degree()     # → sum of out-degrees across all nodes
+db.total_in_degree()      # → sum of in-degrees across all nodes
+db.avg_in_degree()        # → average in-degree (only for directed graphs)
+db.min_in_degree()        # → minimum in-degree (only for directed graphs)
+db.max_in_degree()        # → maximum in-degree (only for directed graphs)
+db.total_out_degree()     # → sum of out-degrees across all nodes
+db.avg_out_degree()       # → average out-degree (only for directed graphs)
+db.min_out_degree()       # → minimum out-degree (only for directed graphs)
+db.max_out_degree()       # → maximum out-degree (only for directed graphs)
+```
+
 ---
 
 ### Update and upsert
@@ -297,6 +323,46 @@ Fast relationship type filter.
 db.find_by_relationship_type("WORKS_AT", fields=["source", "target"])
 ```
 
+---
+
+### GraphResult
+The methods `find_nodes(...)`, `find_by_label(...)`, `find_relationships(...)`, and `find_by_relationship_type(...)` return a `GraphResult` object. This object behaves like a list but also provides methods for aggregation and introspection.
+
+```python
+class GraphResult:
+    def sum(self, field)
+    def avg(self, field)
+    def min(self, field)
+    def max(self, field)
+    def count()
+    def first()
+    def as_list()
+```
+---
+
+### Field Level Aggregations
+You can perform aggregation operations on the results of `find_nodes(...)`, `find_relationships(...)`, `find_by_label(...)`, and `find_by_relationship_type(...)`.
+
+These results support:
+
+- `.count()` — number of matched nodes/relationships
+- `.sum(field)` — sum of a numeric field
+- `.avg(field)` — average of a numeric field
+- `.min(field)` — minimum value of a numeric field
+- `.max(field)` — maximum value
+- `.first()` — return the first matched item
+
+Example:
+```python
+result = db.find_nodes(label="Person", age={"gte": 25}, fields=["name", "age"])
+
+result.count()        # → 2
+result.sum("age")     # → 55
+result.avg("age")     # → 27.5
+result.min("age")     # → 25
+result.max("age")     # → 30
+result.first()        # → {'name': 'Alice', 'age': 25}
+```
 ---
 
 ### Pattern matching
