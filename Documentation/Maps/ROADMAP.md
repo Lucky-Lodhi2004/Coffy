@@ -9,8 +9,6 @@ It spans NoSQL, SQL, and Graph modules and aims to improve developer experience,
 | Goal | Description |
 |------|-------------|
 | CLI Tools | Terminal-based exploration and querying of NoSQL/GraphDB |
-| Code Style CI | Add Ruff + Black formatting checks in GitHub Actions |
-| Result Export Utilities | `.to_csv()`, `.to_json()` for NoSQL and Graph queries |
 | Improved Error Messages | Raise consistent, readable errors for misused filters and joins |
 
 ---
