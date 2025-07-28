@@ -282,7 +282,7 @@ db.project_relationship("U1", "U2", fields=["since"])  # {'since': 2020}
 ### Find functions
 
 #### `find_nodes(label=None, fields=None, **conditions)`
-Filter nodes by label and conditions. Supports `_logic` and comparison operators.
+Filter nodes by label and conditions. Supports `_logic` and comparison operators. Supports pagination with `limit` and `offset`.
 
 ```python
 # 1) Exact match
@@ -296,6 +296,11 @@ db.find_nodes(label="Person", _logic="not", age={"lt": 35})
 
 # 4) Range
 db.find_nodes(label="Person", age={"gte": 25, "lt": 35}, fields=["id", "name"])
+
+# 5) Pagination
+db.find_nodes(label="Person", fields=["id", "name"], limit=10, offset=5)
+db.find_nodes(label="Person", fields=["id", "name"], limit=5)
+db.find_nodes(label="Person", _logic="or", name="Alice", age={"gt": 35}, offset=1)
 ```
 
 #### `find_by_label(label, fields=None)`
@@ -303,6 +308,8 @@ Fast label filter.
 
 ```python
 db.find_by_label("Person", fields=["id", "name"])
+
+db.find_by_label("Company", fields=["id", "name"], limit=5, offset=2)
 ```
 
 #### `find_relationships(rel_type=None, fields=None, **conditions)`
@@ -314,6 +321,9 @@ db.find_relationships(rel_type="FRIEND_OF", since={"gte": 2015})
 
 # Any relationships with weight less than 0.5
 db.find_relationships(weight={"lt": 0.5})
+
+db.find_relationships(rel_type="WORKS_AT", fields=["source", "target", "title"],
+                       limit=10, offset=5)
 ```
 
 #### `find_by_relationship_type(rel_type, fields=None)`
@@ -321,6 +331,8 @@ Fast relationship type filter.
 
 ```python
 db.find_by_relationship_type("WORKS_AT", fields=["source", "target"])
+
+db.find_by_relationship_type("FRIEND_OF", fields=["source", "target"], limit=5, offset=2)
 ```
 
 ---

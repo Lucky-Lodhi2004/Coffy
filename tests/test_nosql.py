@@ -132,6 +132,7 @@ class TestCollectionManager(unittest.TestCase):
                 local_key="id",
                 foreign_key="user_id",
                 as_field="latest",
+                many=False,
             )
             .merge(lambda d: {"latest_total": d.get("latest", {}).get("total", 0)})
             .run()
@@ -170,6 +171,112 @@ class TestCollectionManager(unittest.TestCase):
         self.assertEqual(result["replaced"], 3)
         all_docs = self.col.all()
         self.assertTrue(all(isinstance(d, dict) and not d for d in all_docs))
+
+    def test_limit_only(self):
+        result = self.col.where("age").gte(0).limit(2).run(fields=["name"])
+        self.assertEqual(len(result), 2)
+
+    def test_offset_only(self):
+        result = self.col.where("age").gte(0).offset(1).run(fields=["name"])
+        self.assertEqual(len(result), 2)
+
+    def test_limit_and_offset(self):
+        result = self.col.where("age").gte(0).offset(1).limit(1).run(fields=["name"])
+        self.assertEqual(len(result), 1)
+
+    def test_offset_out_of_range(self):
+        result = self.col.where("age").gte(0).offset(100).run()
+        self.assertEqual(len(result), 0)
+
+    def test_limit_zero(self):
+        result = self.col.where("age").gte(0).limit(0).run()
+        self.assertEqual(len(result), 0)
+
+    def test_lookup_many_orders_and_merge_total(self):
+        users = db("multi_users")
+        orders = db("multi_orders")
+        users.clear()
+        orders.clear()
+
+        users.add_many(
+            [
+                {"id": 1, "name": "Alice"},
+                {"id": 2, "name": "Bob"},
+                {"id": 3, "name": "Carol"},
+            ]
+        )
+        orders.add_many(
+            [
+                {"order_id": 101, "user_id": 1, "total": 10},
+                {"order_id": 102, "user_id": 1, "total": 15},
+                {"order_id": 103, "user_id": 2, "total": 20},
+                {"order_id": 104, "user_id": 2, "total": 30},
+                {"order_id": 105, "user_id": 2, "total": 25},
+                # Carol has no orders
+            ]
+        )
+
+        result = (
+            users.lookup("multi_orders", "id", "user_id", "orders", many=True)
+            .merge(lambda u: {"total_spent": sum(o["total"] for o in u["orders"])})
+            .run()
+            .as_list()
+        )
+
+        totals = {u["name"]: u["total_spent"] for u in result}
+        self.assertEqual(totals["Alice"], 25)  # 10 + 15
+        self.assertEqual(totals["Bob"], 75)  # 20 + 30 + 25
+        self.assertEqual(totals["Carol"], 0)  # no orders
+
+    def test_chained_query_with_logic_aggregate_and_find(self):
+        users = db("logic_users")
+        orders = db("logic_orders")
+        users.clear()
+        orders.clear()
+
+        users.add_many(
+            [
+                {"id": 1, "name": "Neel", "vip": True, "age": 30},
+                {"id": 2, "name": "Bea", "vip": False, "age": 25},
+                {"id": 3, "name": "Tanaya", "vip": True, "age": 22},
+            ]
+        )
+        orders.add_many(
+            [
+                {"order_id": 1, "user_id": 1, "total": 100},
+                {"order_id": 2, "user_id": 1, "total": 50},
+                {"order_id": 3, "user_id": 2, "total": 30},
+                {"order_id": 4, "user_id": 3, "total": 25},
+                {"order_id": 5, "user_id": 3, "total": 10},
+            ]
+        )
+
+        result = (
+            users.match_any(
+                lambda q: q.where("vip").eq(True), lambda q: q.where("age").gt(23)
+            )
+            .lookup("logic_orders", "id", "user_id", "orders", many=True)
+            .merge(
+                lambda u: {"total_spent": sum(o["total"] for o in u.get("orders", []))}
+            )
+            .run(fields=["name", "vip", "total_spent"])
+            .as_list()
+        )
+
+        names = [r["name"] for r in result]
+        totals = {r["name"]: r["total_spent"] for r in result}
+        self.assertIn("Neel", names)
+        self.assertIn("Bea", names)
+        self.assertIn("Tanaya", names)
+
+        self.assertEqual(totals["Neel"], 150)
+        self.assertEqual(totals["Bea"], 30)
+        self.assertEqual(totals["Tanaya"], 35)
+
+        for r in result:
+            self.assertIn("vip", r)
+            self.assertIn("total_spent", r)
+        self.assertNotIn("age", r)  # `find()` excludes age
 
 
 unittest.TextTestRunner().run(

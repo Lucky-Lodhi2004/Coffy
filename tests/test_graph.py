@@ -239,5 +239,30 @@ class TestGraphDB(unittest.TestCase):
             GraphDB(path=bad_path)
         os.remove(bad_path)
 
+    def test_find_nodes_with_limit(self):
+        results = self.db.find_nodes(label="Person", limit=2)
+        self.assertEqual(len(results), 2)
+
+    def test_find_nodes_with_offset(self):
+        results = self.db.find_nodes(label="Person", offset=10)
+        self.assertEqual(len(results), 0)
+
+    def test_find_nodes_limit_and_offset(self):
+        all_results = self.db.find_nodes(label="Person").as_list()
+        sliced = self.db.find_nodes(label="Person", offset=1, limit=1).as_list()
+        self.assertEqual(sliced[0], all_results[1])
+
+    def test_find_relationships_with_limit(self):
+        results = self.db.find_relationships(rel_type="KNOWS", limit=1)
+        self.assertEqual(len(results), 1)
+
+    def test_find_by_label_with_limit_offset(self):
+        results = self.db.find_by_label("Person", limit=1, offset=2)
+        self.assertEqual(len(results), 1)
+
+    def test_find_by_relationship_type_with_offset_out_of_range(self):
+        results = self.db.find_by_relationship_type("KNOWS", offset=10)
+        self.assertEqual(len(results), 0)
+
 
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
