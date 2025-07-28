@@ -26,6 +26,7 @@
     - [Mutation](#mutation)
     - [Aggregations (query-scoped)](#aggregations-query-scoped)
     - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
+    - [Pagination](#pagination)
 - [DocList](#doclist)
 - [Error Handling](#error-handling)
 - [Performance & Limits](#performance--limits)
@@ -85,10 +86,14 @@ Example on disk:
 
 ### CollectionManager
 
-Constructor:
+#### Constructor
 ```python
 CollectionManager(name: str, path: str | None = None)
 ```
+
+- name -- the collection name
+- path -- optional path to a JSON file for persistence; if `None` or `:memory:`, in-memory only
+
 
 #### Insertion
 
@@ -371,6 +376,20 @@ out = (
 > Note: `lookup` in this engine is **one-to-one**. If you need one-to-many, you can adapt it by collecting a list of foreign matches per document.
 
 ---
+#### Pagination
+
+You can paginate query results using `.limit(n)` and `.offset(m)`:
+
+```python
+limit(n: int) -> QueryBuilder # Limits the number of results.
+offset(m: int) -> QueryBuilder # Skips the first m results.
+```
+
+**Examples**
+```python
+col.where("score").gte(50).offset(10).limit(5).run()
+# Returns 5 documents starting from the 11th result (zero-indexed).
+```
 
 ### DocList
 

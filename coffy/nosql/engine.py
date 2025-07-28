@@ -29,6 +29,8 @@ class QueryBuilder:
         self.all_collections = all_collections or {}
         self._lookup_done = False
         self._lookup_results = None
+        self._limit = None
+        self._offset = None
 
     @staticmethod
     def _get_nested(doc, dotted_key):
@@ -228,6 +230,10 @@ class QueryBuilder:
         Returns a DocList containing the matching documents.
         """
         results = [doc for doc in self.documents if all(f(doc) for f in self.filters)]
+        if self._offset:
+            results = results[self._offset :]
+        if self._limit is not None:
+            results = results[: self._limit]
         if self._lookup_done:
             results = self._lookup_results
 
@@ -390,6 +396,25 @@ class QueryBuilder:
         self._lookup_results = merged
         return self
 
+    # Pagination
+    def limit(self, n):
+        """
+        Limit the number of results returned by the query.
+        n -- Maximum number of documents to return.
+        Returns self to allow method chaining.
+        """
+        self._limit = n
+        return self
+
+    def offset(self, n):
+        """
+        Skip the first n results returned by the query.
+        n -- Number of documents to skip.
+        Returns self to allow method chaining.
+        """
+        self._offset = n
+        return self
+
 
 _collection_registry = {}
 
@@ -409,7 +434,10 @@ class CollectionManager:
         self.in_memory = False
 
         if path:
-            if not path.endswith(".json"):
+            if path == ":memory:":
+                self.in_memory = True
+                self.path = None
+            elif not path.endswith(".json"):
                 raise ValueError("Path must be to a .json file")
             self.path = path
         else:

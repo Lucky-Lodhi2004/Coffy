@@ -171,6 +171,26 @@ class TestCollectionManager(unittest.TestCase):
         all_docs = self.col.all()
         self.assertTrue(all(isinstance(d, dict) and not d for d in all_docs))
 
+    def test_limit_only(self):
+        result = self.col.where("age").gte(0).limit(2).run(fields=["name"])
+        self.assertEqual(len(result), 2)
+
+    def test_offset_only(self):
+        result = self.col.where("age").gte(0).offset(1).run(fields=["name"])
+        self.assertEqual(len(result), 2)
+
+    def test_limit_and_offset(self):
+        result = self.col.where("age").gte(0).offset(1).limit(1).run(fields=["name"])
+        self.assertEqual(len(result), 1)
+
+    def test_offset_out_of_range(self):
+        result = self.col.where("age").gte(0).offset(100).run()
+        self.assertEqual(len(result), 0)
+
+    def test_limit_zero(self):
+        result = self.col.where("age").gte(0).limit(0).run()
+        self.assertEqual(len(result), 0)
+
 
 unittest.TextTestRunner().run(
     unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager)
