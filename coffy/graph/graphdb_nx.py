@@ -794,3 +794,10 @@ class GraphDB:
         """
         if not self.in_memory:
             self.save(self.path)
+
+    def clear(self):
+        """
+        Clear the graph, removing all nodes and relationships.
+        """
+        self.g.clear()
+        self._persist()

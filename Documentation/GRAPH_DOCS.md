@@ -145,6 +145,11 @@ Remove a node.
 db.remove_node("U4")
 ```
 
+#### `clear()`
+Clear the graph, removing all nodes and relationships.
+```python
+db.clear()
+```
 ---
 
 ### Relationship operations
