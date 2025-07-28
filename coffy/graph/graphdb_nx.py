@@ -5,6 +5,7 @@
 A simple graph database using NetworkX.
 """
 
+from .atomicity import _atomic_save
 from .graph_result import GraphResult
 import json
 import networkx as nx
@@ -744,8 +745,7 @@ class GraphDB:
         path = path or self.path
         if not path:
             raise ValueError("No path specified to save the graph.")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=4)
+        _atomic_save(self.to_dict(), path)
 
     def load(self, path=None):
         """
@@ -786,8 +786,7 @@ class GraphDB:
         result = result.as_list() if hasattr(result, "as_list") else result
         if path is None:
             raise ValueError("No path specified to save the query result.")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(result, f, indent=4)
+        _atomic_save(result, path)
 
     def _persist(self):
         """

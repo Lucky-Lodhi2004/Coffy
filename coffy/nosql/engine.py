@@ -6,6 +6,7 @@ A simple NoSQL database engine.
 This engine supports basic CRUD operations, querying with filters, and aggregation functions.
 """
 
+from .atomicity import _atomic_save
 import json
 import os
 import re
@@ -490,8 +491,7 @@ class CollectionManager:
         If in_memory is True, this method does nothing.
         """
         if not self.in_memory:
-            with open(self.path, "w", encoding="utf-8") as f:
-                json.dump(self.documents, f, indent=4)
+            _atomic_save(self.documents, self.path)
 
     def add(self, document: dict):
         """
@@ -633,8 +633,7 @@ class CollectionManager:
         Export the collection to a JSON file.
         path -- The file path to export the collection.
         """
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.documents, f, indent=4)
+        _atomic_save(self.documents, path)
 
     def import_(self, path):
         """
@@ -661,8 +660,7 @@ class CollectionManager:
         """
         if not path.endswith(".json"):
             raise ValueError("Invalid file format. Please use a .json file.")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.documents, f, indent=4)
+        _atomic_save(self.documents, path)
 
     def all_docs(self):
         """
@@ -728,8 +726,7 @@ class DocList:
         Save the documents in the DocList to a JSON file.
         path -- The file path to save the documents.
         """
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self._docs, f, indent=4)
+        _atomic_save(self._docs, path)
 
     def as_list(self):
         """
