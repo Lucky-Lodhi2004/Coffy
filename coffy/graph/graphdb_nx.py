@@ -260,11 +260,13 @@ class GraphDB:
             return rel
         return {k: rel[k] for k in fields if k in rel}
 
-    def find_nodes(self, label=None, fields=None, **conditions):
+    def find_nodes(self, label=None, fields=None, limit=None, offset=0, **conditions):
         """
         Find nodes in the graph based on conditions.
         label -- Optional label to filter nodes by.
         fields -- Optional list of fields to include in the projection.
+        limit -- Optional limit on the number of results.
+        offset -- Optional offset for pagination.
         conditions -- Conditions to filter nodes by.
         Returns a list of nodes that match the conditions.
             Each node is projected using the specified fields.
@@ -275,14 +277,16 @@ class GraphDB:
                 for n, a in self.g.nodes(data=True)
                 if (label is None or label in a.get("_labels", []))
                 and self._match_conditions(a, conditions)
-            ]
+            ][offset : offset + limit if limit is not None else None]
         )
 
-    def find_by_label(self, label, fields=None):
+    def find_by_label(self, label, fields=None, limit=None, offset=0):
         """
         Find nodes by label.
         label -- Label to filter nodes by.
         fields -- Optional list of fields to include in the projection.
+        limit -- Optional limit on the number of results.
+        offset -- Optional offset for pagination.
         Returns a list of nodes that have the specified label.
             Each node is projected using the specified fields.
         """
@@ -291,14 +295,18 @@ class GraphDB:
                 self.project_node(n, fields)
                 for n, a in self.g.nodes(data=True)
                 if label in a.get("_labels", [])
-            ]
+            ][offset : offset + limit if limit is not None else None]
         )
 
-    def find_relationships(self, rel_type=None, fields=None, **conditions):
+    def find_relationships(
+        self, rel_type=None, fields=None, limit=None, offset=0, **conditions
+    ):
         """
         Find relationships in the graph based on conditions.
         rel_type -- Optional type of the relationship to filter by.
         fields -- Optional list of fields to include in the projection.
+        limit -- Optional limit on the number of results.
+        offset -- Optional offset for pagination.
         conditions -- Conditions to filter relationships by.
         Returns a list of relationships that match the conditions.
             Each relationship is projected using the specified fields.
@@ -309,14 +317,16 @@ class GraphDB:
                 for u, v, a in self.g.edges(data=True)
                 if (rel_type is None or a.get("_type") == rel_type)
                 and self._match_conditions(a, conditions)
-            ]
+            ][offset : offset + limit if limit is not None else None]
         )
 
-    def find_by_relationship_type(self, rel_type, fields=None):
+    def find_by_relationship_type(self, rel_type, fields=None, limit=None, offset=0):
         """
         Find relationships by type.
         rel_type -- Type of the relationship to filter by.
         fields -- Optional list of fields to include in the projection.
+        limit -- Optional limit on the number of results.
+        offset -- Optional offset for pagination.
         Returns a list of relationships that have the specified type.
             Each relationship is projected using the specified fields.
         """
@@ -325,7 +335,7 @@ class GraphDB:
                 self.project_relationship(u, v, fields)
                 for u, v, a in self.g.edges(data=True)
                 if a.get("_type") == rel_type
-            ]
+            ][offset : offset + limit if limit is not None else None]
         )
 
     def _match_conditions(self, attrs, conditions):

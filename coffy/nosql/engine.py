@@ -235,7 +235,9 @@ class QueryBuilder:
         if self._limit is not None:
             results = results[: self._limit]
         if self._lookup_done:
-            results = self._lookup_results
+            results = self._lookup_results.copy()
+            self._lookup_done = False
+            self._lookup_results = None
 
         if fields is not None:
             projected = []
@@ -357,24 +359,43 @@ class QueryBuilder:
         return max(values) if values else None
 
     # Lookup
-    def lookup(self, foreign_collection_name, local_key, foreign_key, as_field):
+    def lookup(
+        self, foreign_collection_name, local_key, foreign_key, as_field, many=True
+    ):
         """
-        Perform a lookup to enrich documents with related data from another collection.
-        foreign_collection_name -- The name of the foreign collection to join with.
-        local_key -- The key in the local documents to match against the foreign collection.
-        foreign_key -- The key in the foreign documents to match against the local collection.
-        as_field -- The name of the field to add to the local documents with the joined data.
-        Returns self to allow method chaining.
+        Perform a lookup to join related documents from another collection.
+        foreign_collection_name -- Name of the collection to join from.
+        local_key -- Field in the local documents to match on.
+        foreign_key -- Field in the foreign documents to match on.
+        as_field -- Name of the field to store the joined data.
+        many -- If True, stores a list of matches. If False, stores only the first match.
         """
-        foreign_docs = self.all_collections.get(foreign_collection_name, [])
-        fk_map = {doc[foreign_key]: doc for doc in foreign_docs}
+        if self._lookup_done:
+            raise RuntimeError("Cannot perform another lookup after a previous one")
+
+        foreign_col = self.all_collections.get(foreign_collection_name)
+        if not foreign_col:
+            raise ValueError(
+                f"Collection '{foreign_collection_name}' not found in registry"
+            )
+        foreign_docs = foreign_col.documents
+
+        fk_map = {}
+        for doc in foreign_docs:
+            key = doc.get(foreign_key)
+            if key is not None:
+                fk_map.setdefault(key, []).append(doc)
+
         enriched = []
         for doc in self.run():
-            joined = fk_map.get(doc.get(local_key))
-            if joined:
-                doc = dict(doc)  # copy
+            joined = fk_map.get(doc.get(local_key), [])
+            doc = dict(doc)  # shallow copy
+            if many:
                 doc[as_field] = joined
-                enriched.append(doc)
+            else:
+                doc[as_field] = joined[0] if joined else None
+            enriched.append(doc)
+
         self._lookup_done = True
         self._lookup_results = enriched
         return self
@@ -382,9 +403,9 @@ class QueryBuilder:
     # Merge
     def merge(self, fn):
         """
-        Merge the results of the query with additional data.
-        fn -- A function that takes a document and returns a dictionary of fields to update.
-        Returns self to allow method chaining.
+        Merge documents with additional computed fields.
+
+        fn -- A function that takes a document and returns a dict to merge in.
         """
         docs = self._lookup_results if self._lookup_done else self.run()
         merged = []
@@ -445,7 +466,7 @@ class CollectionManager:
 
         self.documents = []
         self._load()
-        _collection_registry[name] = self.documents
+        _collection_registry[name] = self
 
     def _load(self):
         """
