@@ -59,4 +59,3 @@ print(result)
 result.to_csv("region_sales_summary.csv")
 ```
 
----
