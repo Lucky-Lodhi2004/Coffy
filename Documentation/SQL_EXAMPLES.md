@@ -26,11 +26,13 @@ result.to_csv("high_salary_employees.csv")
 ```
 
 ### 🖨️ Output:
+
+```sql
 name  | role    
 ------+----------
 Neel  | Manager  
 Zara  | Developer
-
+```
 
 
 
@@ -66,9 +68,11 @@ print(result)
 result.to_csv("region_sales_summary.csv")
 ```
 ### 🖨️ Output:
+```sql
 region | total_sales
 -------+------------
 North  | 1700       
 South  | 800
+```
 
 
