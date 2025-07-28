@@ -1,27 +1,17 @@
 # 🗺️ Coffy Tentative Roadmap
 
 This roadmap outlines short-, mid-, and long-term goals for the Coffy embedded database engine.  
-It spans `NoSQL`, `SQL`, and `Graph` modules and aims to improve developer experience, performance, and extensibility.
-
+It spans NoSQL, SQL, and Graph modules and aims to improve developer experience, performance, and extensibility.
 ---
 
-## ✅ Current Status
-
-- `NoSQL`: Nested queries, projections, joins (1:1), logic chaining, full test suite  
-- `SQL`: Thin SQLite wrapper with raw query support, structured result object  
-- `Graph`: NetworkX-based engine with labels, path matching, filtering, projections
-
----
-
-## 🥇 Short-Term Goals (v0.2.x)
+## 🥇 Short-Term Goals
 
 | Goal | Description |
 |------|-------------|
-| Pagination for NoSQL | Add `limit` and `offset` to `run()` |
-| CLI tools | Inspect NoSQL and GraphDB from terminal |
-| `maps/` docs | Add feature matrix, roadmap, and design overview |
-| Code style CI | Add Ruff + Black lint checks on PR |
-| Feature coverage tests | Add tests for missing Graph methods (`neighbors`, `degree`) |
+| CLI Tools | Terminal-based exploration and querying of NoSQL/GraphDB |
+| Code Style CI | Add Ruff + Black formatting checks in GitHub Actions |
+| Result Export Utilities | `.to_csv()`, `.to_json()` for NoSQL and Graph queries |
+| Improved Error Messages | Raise consistent, readable errors for misused filters and joins |
 
 ---
 
@@ -29,12 +19,10 @@ It spans `NoSQL`, `SQL`, and `Graph` modules and aims to improve developer exper
 
 | Goal | Description |
 |------|-------------|
-| One-to-many lookups | Extend NoSQL `lookup()` to support lists |
-| Indexing (NoSQL) | Add internal field index for faster filtering |
-| Graph aggregations | Add node/edge count, degree sum, etc. |
-| Improved CLI | Unified CLI for loading/querying/exporting data |
-| Plugin system | Optional extensions (e.g. validation, typing, formatters) |
-| Richer docs | Examples for each feature in `docs/` or `examples/` folder |
+| Indexing (NoSQL) | Field-level index maps for faster filter performance |
+| Improved CLI | Unified CLI for loading, querying, exporting, and inspecting databases |
+| Plugin System | Add-on hooks for validation, custom formats, or query transforms |
+| Enhanced Docs | Auto-generated reference and rich examples in `docs/` or `examples/` |
 
 ---
 
@@ -42,22 +30,22 @@ It spans `NoSQL`, `SQL`, and `Graph` modules and aims to improve developer exper
 
 | Goal | Description |
 |------|-------------|
-| GUI viewer | Interactive dashboard to explore databases |
-| Real-time mode | Optional file watcher or in-memory sync with auto-refresh |
-| Indexing in GraphDB | Optimize `find_nodes()` and traversal |
-| NoSQL schema validation | Optional type hints, required fields, constraints |
-| Graph visualizer | Export `GraphDB` to D3.js or Graphviz-compatible format |
-| Hybrid query router | Allow pipelining across NoSQL/SQL/Graph using a unified interface |
-| Public test dataset repo | JSONs and SQL to benchmark and test against |
-| Pyodide/WebAssembly port | Run Coffy in-browser or embedded contexts |
+| GUI Viewer | Visual database inspector for embedded/local use |
+| Real-Time Mode | File watcher or sync mode for dynamic updates |
+| Indexing in GraphDB | Field and structure-based indexing for graph queries |
+| NoSQL Schema Validation | Optional schema system with type checks and constraints |
+| Graph Visualizer | Export to D3.js/Graphviz or interactive HTML view |
+| Hybrid Query Router | Chain filters across NoSQL/SQL/Graph in unified syntax |
+| Public Test Dataset Repo | Curated JSONs and SQL for benchmarking and testing |
+| WebAssembly Build | Run Coffy in-browser (via Pyodide or WASM) for demos or tools |
 
 ---
 
 ## 🔄 Release Cadence
 
-- Minor releases (v0.X): as features are added  
-- Patch releases (v0.X.Y): bugfixes or doc updates  
-- v1.0 target: stable CLI, indexing, docs, and cross-engine integration
+- **Minor releases (v0.X)**: As features are added  
+- **Patch releases (v0.X.Y)**: Bugfixes or doc/test updates  
+- **v1.0 target**: Stable CLI, indexing, docs, and engine interoperability
 
 ---
 
