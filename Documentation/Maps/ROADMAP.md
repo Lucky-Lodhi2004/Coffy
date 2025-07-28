@@ -17,7 +17,6 @@ It spans NoSQL, SQL, and Graph modules and aims to improve developer experience,
 
 | Goal | Description |
 |------|-------------|
-| Indexing (NoSQL) | Field-level index maps for faster filter performance |
 | Improved CLI | Unified CLI for loading, querying, exporting, and inspecting databases |
 | Plugin System | Add-on hooks for validation, custom formats, or query transforms |
 | Enhanced Docs | Auto-generated reference and rich examples in `docs/` or `examples/` |

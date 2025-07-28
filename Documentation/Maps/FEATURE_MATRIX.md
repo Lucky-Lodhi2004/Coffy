@@ -11,7 +11,7 @@
 | **Projections** (select specific fields) | ✅ (`fields=[...]`) | ✅ (`SELECT cols`)     | ✅                       | All support limited projections                       |
 | **Full-Text Search / Regex**             | ✅ (`matches()`)    | ⚠️ (LIKE only)         | ❌                       | Only `nosql` supports regex matching                  |
 | **Aggregations (sum, avg, min, max)**    | ✅                  | ✅                     | ✅                       | GraphDB supports field + graph-level aggregations     |
-| **Indexing**                             | ❌                  | ✅ (SQLite)            | ❌                       | Indexes are only available in `sql`                   |
+| **Indexing**                             | ✅                  | ✅ (SQLite)            | ❌                       | Indexes are not available in `GraphDB`                |
 | **Transactions / Rollback**              | ❌                  | ✅                     | ❌                       | Only `sql` has ACID semantics via SQLite              |
 | **Custom Relationships / Edge Types**    | ❌                  | ❌                     | ✅                       | `graph` has `_type` and attributes on edges           |
 | **Directional Traversals**               | ❌                  | ❌                     | ✅                       | Supports directed + undirected graphs                 |
