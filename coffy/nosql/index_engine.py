@@ -3,10 +3,12 @@
 
 from collections import defaultdict
 
+
 class IndexManager:
     """
     Automatically maintains in-memory indexes for fast lookup.
     """
+
     def __init__(self):
         """
         Initialize the IndexManager with empty indexes and document map.

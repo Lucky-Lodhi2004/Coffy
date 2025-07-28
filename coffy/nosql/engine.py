@@ -33,7 +33,7 @@ class QueryBuilder:
         self._lookup_results = None
         self._limit = None
         self._offset = None
-        
+
         self.collection_name = collection_name
         self.index_manager = None
         if all_collections and collection_name:
@@ -289,7 +289,6 @@ class QueryBuilder:
         self.collection._save()
         return {"updated": count}
 
-
     def delete(self):
         """
         Delete documents that match the current filters.
@@ -299,7 +298,11 @@ class QueryBuilder:
             raise RuntimeError("Cannot propagate delete without CollectionManager.")
 
         before = len(self.collection.documents)
-        to_delete = [doc for doc in self.collection.documents if all(f(doc) for f in self.filters)]
+        to_delete = [
+            doc
+            for doc in self.collection.documents
+            if all(f(doc) for f in self.filters)
+        ]
 
         for doc in to_delete:
             self.index_manager.remove(doc)
@@ -329,7 +332,6 @@ class QueryBuilder:
 
         self.collection._save()
         return {"replaced": replaced}
-
 
     def count(self):
         """
@@ -509,11 +511,11 @@ class CollectionManager:
 
         self.documents = []
         self._load()
-        
+
         self.index_manager = IndexManager()
         for doc in self.documents:
             self.index_manager.index(doc)
-        
+
         _collection_registry[name] = self
 
     def _load(self):
@@ -569,9 +571,11 @@ class CollectionManager:
         field -- The field to filter on.
         Returns a QueryBuilder instance to build the query.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry, collection_name=self.name).where(
-            field
-        )
+        return QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        ).where(field)
 
     def match_any(self, *conditions):
         """
