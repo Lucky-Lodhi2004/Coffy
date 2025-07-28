@@ -25,9 +25,16 @@ print(result)
 result.to_csv("high_salary_employees.csv")
 ```
 
+### 🖨️ Output:
+name  | role    
+------+----------
+Neel  | Manager  
+Zara  | Developer
 
 
-## 📊 Task 2: Group Sales by Region and Calculate Totals
+
+
+## 📊 Example 2: Group Sales by Region and Calculate Totals
 
 This example demonstrates how to aggregate sales data by region using SQL's `GROUP BY` and `SUM()` functions. It outputs total sales per region and saves the result to a CSV file.
 
@@ -58,4 +65,10 @@ print(result)
 # Export result to a CSV file
 result.to_csv("region_sales_summary.csv")
 ```
+### 🖨️ Output:
+region | total_sales
+-------+------------
+North  | 1700       
+South  | 800
+
 
