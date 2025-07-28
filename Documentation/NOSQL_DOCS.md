@@ -26,6 +26,7 @@
     - [Mutation](#mutation)
     - [Aggregations (query-scoped)](#aggregations-query-scoped)
     - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
+    - [Pagination](#pagination)
 - [DocList](#doclist)
 - [Error Handling](#error-handling)
 - [Performance & Limits](#performance--limits)
@@ -85,10 +86,14 @@ Example on disk:
 
 ### CollectionManager
 
-Constructor:
+#### Constructor
 ```python
 CollectionManager(name: str, path: str | None = None)
 ```
+
+- name -- the collection name
+- path -- optional path to a JSON file for persistence; if `None` or `:memory:`, in-memory only
+
 
 #### Insertion
 
@@ -317,21 +322,23 @@ max(field)
 users.where("email").matches("@a\\.com$").avg("age")
 ```
 
-#### Lookup (one-to-one join) and Merge
+#### Lookup and Merge
 
 ```python
-lookup(foreign_collection_name, local_key, foreign_key, as_field) -> QueryBuilder
+lookup(foreign_collection_name, local_key, foreign_key, as_field, many=True) -> QueryBuilder  
 merge(fn: callable) -> QueryBuilder
 ```
 
-- `lookup` runs the current query, matches each result to documents in another collection by key equality, and attaches the matched doc at `as_field`.
+- `lookup` runs the current query, matches each result to documents in another collection by key equality, and attaches the matched result(s) at `as_field`.
+    - If `many=False`, attaches a single document or `None` (one-to-one).
+    - If `many=True`, attaches a list of matching documents (one-to-many).
 - `merge` transforms each (possibly looked-up) document by merging in fields returned from `fn(doc)`.
 
-**Example**
+**Example - One-to-one join**
 
 ```python
-users = CollectionManager("users")
-orders = CollectionManager("orders")
+users = db("users")
+orders = db("orders")
 
 users.clear(); orders.clear()
 users.add_many([
@@ -344,33 +351,65 @@ orders.add_many([
     {"order_id": 12, "user_id": 2, "total": 20}
 ])
 
-# Build a quick index map of the latest order per user_id for demo simplicity
-# (lookup here is one-to-one; if you need one-to-many, extend the engine)
+# Manually build a one-to-one map of latest order
 latest_by_user = {}
 for o in orders.all_docs():
-    latest_by_user[o["user_id"]] = o
-orders_latest = CollectionManager("orders_latest")
+    latest_by_user[o["user_id"]] = o  # override to get latest
+orders_latest = db("orders_latest")
 orders_latest.clear()
 orders_latest.add_many(list(latest_by_user.values()))
 
-# Join and merge
 out = (
     users.where("id").in_([1, 2])
-         .lookup("orders_latest", local_key="id", foreign_key="user_id", as_field="latest_order")
+         .lookup("orders_latest", local_key="id", foreign_key="user_id", as_field="latest_order", many=False)
          .merge(lambda d: {"latest_total": d.get("latest_order", {}).get("total", 0)})
          .run()
          .as_list()
 )
 
-# -> [
-#   {'id': 1, 'name': 'Neel', 'latest_order': {'order_id': 11, 'user_id': 1, 'total': 75}, 'latest_total': 75},
-#   {'id': 2, 'name': 'Bea',  'latest_order': {'order_id': 12, 'user_id': 2, 'total': 20}, 'latest_total': 20}
+# Result:
+# [
+#   {'id': 1, 'name': 'Neel', 'latest_order': {...}, 'latest_total': 75},
+#   {'id': 2, 'name': 'Bea',  'latest_order': {...}, 'latest_total': 20}
+# ]
+
+```
+
+**Example - One-to-many join**
+
+```python
+# Using full orders collection in a one-to-many join
+out = (
+    users.lookup("orders", local_key="id", foreign_key="user_id", as_field="orders", many=True)
+         .merge(lambda u: {"total_spent": sum(o["total"] for o in u["orders"])})
+         .run()
+         .as_list()
+)
+
+# Result:
+# [
+#   {'id': 1, 'name': 'Neel', 'orders': [...], 'total_spent': 125},
+#   {'id': 2, 'name': 'Bea',  'orders': [...], 'total_spent': 20}
 # ]
 ```
 
-> Note: `lookup` in this engine is **one-to-one**. If you need one-to-many, you can adapt it by collecting a list of foreign matches per document.
+> Note: `lookup` defaults to one-to-many (`many=True`). Use `many=False` for one-to-one joins.
 
 ---
+#### Pagination
+
+You can paginate query results using `.limit(n)` and `.offset(m)`:
+
+```python
+limit(n: int) -> QueryBuilder # Limits the number of results.
+offset(m: int) -> QueryBuilder # Skips the first m results.
+```
+
+**Examples**
+```python
+col.where("score").gte(50).offset(10).limit(5).run()
+# Returns 5 documents starting from the 11th result (zero-indexed).
+```
 
 ### DocList
 

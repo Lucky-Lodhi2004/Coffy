@@ -6,6 +6,8 @@ A simple NoSQL database engine.
 This engine supports basic CRUD operations, querying with filters, and aggregation functions.
 """
 
+from .atomicity import _atomic_save
+from .index_engine import IndexManager
 import json
 import os
 import re
@@ -17,7 +19,7 @@ class QueryBuilder:
     Supports filtering, aggregation, and lookups.
     """
 
-    def __init__(self, documents, all_collections=None):
+    def __init__(self, documents, all_collections=None, collection_name=None):
         """
         Initialize the QueryBuilder with a collection of documents.
         documents -- List of documents (dictionaries) to query.
@@ -29,6 +31,16 @@ class QueryBuilder:
         self.all_collections = all_collections or {}
         self._lookup_done = False
         self._lookup_results = None
+        self._limit = None
+        self._offset = None
+
+        self.collection_name = collection_name
+        self.index_manager = None
+        if all_collections and collection_name:
+            cm = all_collections.get(collection_name)
+            if cm:
+                self.index_manager = cm.index_manager
+                self.collection = cm
 
     @staticmethod
     def _get_nested(doc, dotted_key):
@@ -60,6 +72,10 @@ class QueryBuilder:
         value -- The value to compare against.
         Returns self to allow method chaining.
         """
+        if self.index_manager:
+            docs = self.index_manager.query(self.current_field, value)
+            if docs:
+                self.documents = docs
         return self._add_filter(
             lambda d: QueryBuilder._get_nested(d, self.current_field) == value
         )
@@ -132,6 +148,10 @@ class QueryBuilder:
         values -- The list of values to compare against.
         Returns self to allow method chaining.
         """
+        if self.index_manager:
+            docs = self.index_manager.query_in(self.current_field, values)
+            if docs:
+                self.documents = docs
         return self._add_filter(
             lambda d: QueryBuilder._get_nested(d, self.current_field) in values
         )
@@ -228,8 +248,14 @@ class QueryBuilder:
         Returns a DocList containing the matching documents.
         """
         results = [doc for doc in self.documents if all(f(doc) for f in self.filters)]
+        if self._offset:
+            results = results[self._offset :]
+        if self._limit is not None:
+            results = results[: self._limit]
         if self._lookup_done:
-            results = self._lookup_results
+            results = self._lookup_results.copy()
+            self._lookup_done = False
+            self._lookup_results = None
 
         if fields is not None:
             projected = []
@@ -249,11 +275,18 @@ class QueryBuilder:
         changes -- A dictionary of fields to update in the matching documents.
         Returns a dictionary with the count of updated documents.
         """
+        if not self.collection:
+            raise RuntimeError("Cannot propagate update without CollectionManager.")
+
         count = 0
-        for doc in self.documents:
+        for doc in self.collection.documents:
             if all(f(doc) for f in self.filters):
+                self.index_manager.remove(doc)
                 doc.update(changes)
+                self.index_manager.index(doc)
                 count += 1
+
+        self.collection._save()
         return {"updated": count}
 
     def delete(self):
@@ -261,11 +294,25 @@ class QueryBuilder:
         Delete documents that match the current filters.
         Returns a dictionary with the count of deleted documents.
         """
-        before = len(self.documents)
-        self.documents[:] = [
-            doc for doc in self.documents if not all(f(doc) for f in self.filters)
+        if not self.collection:
+            raise RuntimeError("Cannot propagate delete without CollectionManager.")
+
+        before = len(self.collection.documents)
+        to_delete = [
+            doc
+            for doc in self.collection.documents
+            if all(f(doc) for f in self.filters)
         ]
-        return {"deleted": before - len(self.documents)}
+
+        for doc in to_delete:
+            self.index_manager.remove(doc)
+
+        self.collection.documents[:] = [
+            doc for doc in self.collection.documents if doc not in to_delete
+        ]
+        self.collection._save()
+
+        return {"deleted": before - len(self.collection.documents)}
 
     def replace(self, new_doc):
         """
@@ -273,11 +320,17 @@ class QueryBuilder:
         new_doc -- The new document to replace matching documents with.
         Returns a dictionary with the count of replaced documents.
         """
+        if not self.collection:
+            raise RuntimeError("Cannot propagate replace without CollectionManager.")
+
         replaced = 0
-        for i, doc in enumerate(self.documents):
+        for i, doc in enumerate(self.collection.documents):
             if all(f(doc) for f in self.filters):
-                self.documents[i] = new_doc
+                self.index_manager.reindex(doc, new_doc)
+                self.collection.documents[i] = new_doc
                 replaced += 1
+
+        self.collection._save()
         return {"replaced": replaced}
 
     def count(self):
@@ -351,24 +404,43 @@ class QueryBuilder:
         return max(values) if values else None
 
     # Lookup
-    def lookup(self, foreign_collection_name, local_key, foreign_key, as_field):
+    def lookup(
+        self, foreign_collection_name, local_key, foreign_key, as_field, many=True
+    ):
         """
-        Perform a lookup to enrich documents with related data from another collection.
-        foreign_collection_name -- The name of the foreign collection to join with.
-        local_key -- The key in the local documents to match against the foreign collection.
-        foreign_key -- The key in the foreign documents to match against the local collection.
-        as_field -- The name of the field to add to the local documents with the joined data.
-        Returns self to allow method chaining.
+        Perform a lookup to join related documents from another collection.
+        foreign_collection_name -- Name of the collection to join from.
+        local_key -- Field in the local documents to match on.
+        foreign_key -- Field in the foreign documents to match on.
+        as_field -- Name of the field to store the joined data.
+        many -- If True, stores a list of matches. If False, stores only the first match.
         """
-        foreign_docs = self.all_collections.get(foreign_collection_name, [])
-        fk_map = {doc[foreign_key]: doc for doc in foreign_docs}
+        if self._lookup_done:
+            raise RuntimeError("Cannot perform another lookup after a previous one")
+
+        foreign_col = self.all_collections.get(foreign_collection_name)
+        if not foreign_col:
+            raise ValueError(
+                f"Collection '{foreign_collection_name}' not found in registry"
+            )
+        foreign_docs = foreign_col.documents
+
+        fk_map = {}
+        for doc in foreign_docs:
+            key = doc.get(foreign_key)
+            if key is not None:
+                fk_map.setdefault(key, []).append(doc)
+
         enriched = []
         for doc in self.run():
-            joined = fk_map.get(doc.get(local_key))
-            if joined:
-                doc = dict(doc)  # copy
+            joined = fk_map.get(doc.get(local_key), [])
+            doc = dict(doc)  # shallow copy
+            if many:
                 doc[as_field] = joined
-                enriched.append(doc)
+            else:
+                doc[as_field] = joined[0] if joined else None
+            enriched.append(doc)
+
         self._lookup_done = True
         self._lookup_results = enriched
         return self
@@ -376,9 +448,9 @@ class QueryBuilder:
     # Merge
     def merge(self, fn):
         """
-        Merge the results of the query with additional data.
-        fn -- A function that takes a document and returns a dictionary of fields to update.
-        Returns self to allow method chaining.
+        Merge documents with additional computed fields.
+
+        fn -- A function that takes a document and returns a dict to merge in.
         """
         docs = self._lookup_results if self._lookup_done else self.run()
         merged = []
@@ -388,6 +460,25 @@ class QueryBuilder:
             merged.append(new_doc)
         self._lookup_done = True
         self._lookup_results = merged
+        return self
+
+    # Pagination
+    def limit(self, n):
+        """
+        Limit the number of results returned by the query.
+        n -- Maximum number of documents to return.
+        Returns self to allow method chaining.
+        """
+        self._limit = n
+        return self
+
+    def offset(self, n):
+        """
+        Skip the first n results returned by the query.
+        n -- Number of documents to skip.
+        Returns self to allow method chaining.
+        """
+        self._offset = n
         return self
 
 
@@ -409,7 +500,10 @@ class CollectionManager:
         self.in_memory = False
 
         if path:
-            if not path.endswith(".json"):
+            if path == ":memory:":
+                self.in_memory = True
+                self.path = None
+            elif not path.endswith(".json"):
                 raise ValueError("Path must be to a .json file")
             self.path = path
         else:
@@ -417,7 +511,12 @@ class CollectionManager:
 
         self.documents = []
         self._load()
-        _collection_registry[name] = self.documents
+
+        self.index_manager = IndexManager()
+        for doc in self.documents:
+            self.index_manager.index(doc)
+
+        _collection_registry[name] = self
 
     def _load(self):
         """
@@ -441,8 +540,7 @@ class CollectionManager:
         If in_memory is True, this method does nothing.
         """
         if not self.in_memory:
-            with open(self.path, "w", encoding="utf-8") as f:
-                json.dump(self.documents, f, indent=4)
+            _atomic_save(self.documents, self.path)
 
     def add(self, document: dict):
         """
@@ -451,6 +549,7 @@ class CollectionManager:
         Returns a dictionary with the count of inserted documents.
         """
         self.documents.append(document)
+        self.index_manager.index(document)
         self._save()
         return {"inserted": 1}
 
@@ -461,6 +560,8 @@ class CollectionManager:
         Returns a dictionary with the count of inserted documents.
         """
         self.documents.extend(docs)
+        for doc in docs:
+            self.index_manager.index(doc)
         self._save()
         return {"inserted": len(docs)}
 
@@ -470,9 +571,11 @@ class CollectionManager:
         field -- The field to filter on.
         Returns a QueryBuilder instance to build the query.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).where(
-            field
-        )
+        return QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        ).where(field)
 
     def match_any(self, *conditions):
         """
@@ -576,6 +679,7 @@ class CollectionManager:
         """
         count = len(self.documents)
         self.documents = []
+        self.index_manager.clear()
         self._save()
         return {"cleared": count}
 
@@ -584,8 +688,7 @@ class CollectionManager:
         Export the collection to a JSON file.
         path -- The file path to export the collection.
         """
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.documents, f, indent=4)
+        _atomic_save(self.documents, path)
 
     def import_(self, path):
         """
@@ -612,8 +715,7 @@ class CollectionManager:
         """
         if not path.endswith(".json"):
             raise ValueError("Invalid file format. Please use a .json file.")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.documents, f, indent=4)
+        _atomic_save(self.documents, path)
 
     def all_docs(self):
         """
@@ -679,8 +781,7 @@ class DocList:
         Save the documents in the DocList to a JSON file.
         path -- The file path to save the documents.
         """
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self._docs, f, indent=4)
+        _atomic_save(self._docs, path)
 
     def as_list(self):
         """

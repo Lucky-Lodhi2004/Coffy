@@ -1,23 +1,12 @@
-# ☕ Coffy
+# ☕ Coffy: Local-First Embedded Database Engine for Python
 
-[![PyPI version](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
+[![PyPI](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
 
-**Coffy** is a lightweight embedded database engine for Python, designed for local-first apps, scripts, and tools. It includes:
-
-- `coffy.nosql`: A simple JSON-backed NoSQL engine with a fluent, chainable query interface  
-- `coffy.graph`: An graph engine built on `networkx` with advanced filtering and logic-based querying  
-- `coffy.sql`: A wrapper over `SQLite` for executing raw SQL  
-
----
-## Latest Updates
-- Added projection and dot-notation support for nested fields in NoSQL queries. Expanded logic chaining (`_and`, `_or`, `_not`) with improved test and better query semantics.
-- GraphDB now supports saving query results, fixed relationship type serialization, and added more robust unit coverage.
-- Unit tests added to test NoSQL and Graph database features.
-- Documentation Updated.
+**Coffy** is a lightweight, local-first embedded database engine supporting **NoSQL**, **SQL**, and **Graph** models — all in pure Python. Designed for fast prototyping, scripting, and local apps.
 
 ---
 
-## 🔧 Install
+## 📦 Installation
 
 ```bash
 pip install coffy
@@ -25,68 +14,52 @@ pip install coffy
 
 ---
 
-## 📂 Modules
+## 🚀 Features
 
-### `coffy.nosql`
-
-- Embedded NoSQL document store with a fluent, chainable query API
-- Supports nested fields, logical filters, aggregations, projections, and joins
-- Built for local usage with optional persistence; minimal setup, fast iteration
-
-📄 [NoSQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/NOSQL_DOCS.md)
+- ✅ Local persistence (JSON, SQLite)
+- ✅ In-memory mode (`:memory:` or `None`)
+- ✅ No server needed
+- ✅ Logical and comparison operators
+- ✅ Unified query interface
 
 ---
 
-### `coffy.graph`
+## 🧠 Engines
 
-- Lightweight, file-backed graph database using `networkx` under the hood
-- Supports pattern matching, label/type filtering, logical conditions, and projections
-- Query results can be saved, updated, or transformed; ideal for local, schema-flexible graph data
-
-📄 [Graph Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
-
----
-
-### `coffy.sql`
-
-- SQLite-backed engine with raw SQL query support  
-- Outputs as readable tables or exportable lists  
-- Uses in-memory DB by default, or json-based if initialized with a path  
-
-📄 [SQL Documentation →](https://github.com/nsarathy/Coffy/blob/main/Documentation/SQL_DOCS.md)
+| Engine | Description | Docs |
+|--------|-------------|------|
+| `coffy.graph` | Local graph database (NetworkX-based) | [Graph Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md) |
+| `coffy.nosql` | Document store with chainable queries | [NoSQL Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/NOSQL_DOCS.md) |
+| `coffy.sql`   | Thin SQLite wrapper | [SQL Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/SQL_DOCS.md) |
 
 ---
 
-## 🧪 Example
+## What sets Coffy apart?
+Only embedded Python graph DB with:
 
-```python
-from coffy.nosql import db
+- ✅ Declarative traversal syntax (match_node_path(...))
+- ✅ Label/type filtering, limit/offset, result projection
+- ✅ Unified API for both nodes and relationships
 
-users = db("users", path="users.json")
-users.add({"id": 1, "name": "Neel"})
-print(users.where("name").eq("Neel").first())
-```
+Only pure-Python embedded document store with:
 
-```python
-from coffy.graph import GraphDB
-
-g = GraphDB(directed=True)
-g.add_nodes([{"id": 1, "name": "Neel"}, {"id": 2, "name": "Tanaya"}])
-g.add_relationships([{"source": 1, "target": 2, "type": "friend"}])
-print(g.find_relationships(type="friend"))
-```
-
-```python
-from coffy.sql import init, query
-
-init("app.db")
-query("CREATE TABLE test (id INT, name TEXT)")
-query("INSERT INTO test VALUES (1, 'Neel')")
-print(query("SELECT * FROM test"))
-```
+- ✅ Auto-indexing on all top-level fields
+- ✅ Chainable logical queries (.where(...).eq(...).or_().in_())
+- ✅ Merge/lookups across collections (like mini $lookup)
+- ✅ JSON persistence or in-memory fallback
 
 ---
 
-## 📄 License
+## 🔗 Links
 
-MIT © 2025 nsarathy
+- PyPI: [coffy](https://pypi.org/project/coffy/)
+- Source: [GitHub](https://github.com/nsarathy/Coffy)
+- Graph Documentation: [GRAPH_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
+- SQL Documentation: [SQL_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
+- NoSQL Documentation: [NOSQL_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
+
+---
+
+## ⚖️ License
+
+MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)
