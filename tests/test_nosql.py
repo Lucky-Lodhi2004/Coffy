@@ -24,6 +24,11 @@ class TestCollectionManager(unittest.TestCase):
     def test_add_and_all_docs(self):
         result = self.col.all_docs()
         self.assertEqual(len(result), 3)
+    
+    def test_add_list(self):
+        self.col.add({"name": "Dave", "age": 35, "tags": ["x", "z"]})
+        result = self.col.all_docs()
+        self.assertEqual(len(result), 4)
 
     def test_where_eq(self):
         q = self.col.where("name").eq("Alice")
