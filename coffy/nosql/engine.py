@@ -7,6 +7,7 @@ This engine supports basic CRUD operations, querying with filters, and aggregati
 """
 
 from .atomicity import _atomic_save
+from .index_engine import IndexManager
 import json
 import os
 import re
@@ -18,7 +19,7 @@ class QueryBuilder:
     Supports filtering, aggregation, and lookups.
     """
 
-    def __init__(self, documents, all_collections=None):
+    def __init__(self, documents, all_collections=None, collection_name=None):
         """
         Initialize the QueryBuilder with a collection of documents.
         documents -- List of documents (dictionaries) to query.
@@ -32,6 +33,14 @@ class QueryBuilder:
         self._lookup_results = None
         self._limit = None
         self._offset = None
+        
+        self.collection_name = collection_name
+        self.index_manager = None
+        if all_collections and collection_name:
+            cm = all_collections.get(collection_name)
+            if cm:
+                self.index_manager = cm.index_manager
+                self.collection = cm
 
     @staticmethod
     def _get_nested(doc, dotted_key):
@@ -63,6 +72,10 @@ class QueryBuilder:
         value -- The value to compare against.
         Returns self to allow method chaining.
         """
+        if self.index_manager:
+            docs = self.index_manager.query(self.current_field, value)
+            if docs:
+                self.documents = docs
         return self._add_filter(
             lambda d: QueryBuilder._get_nested(d, self.current_field) == value
         )
@@ -135,6 +148,10 @@ class QueryBuilder:
         values -- The list of values to compare against.
         Returns self to allow method chaining.
         """
+        if self.index_manager:
+            docs = self.index_manager.query_in(self.current_field, values)
+            if docs:
+                self.documents = docs
         return self._add_filter(
             lambda d: QueryBuilder._get_nested(d, self.current_field) in values
         )
@@ -258,23 +275,41 @@ class QueryBuilder:
         changes -- A dictionary of fields to update in the matching documents.
         Returns a dictionary with the count of updated documents.
         """
+        if not self.collection:
+            raise RuntimeError("Cannot propagate update without CollectionManager.")
+
         count = 0
-        for doc in self.documents:
+        for doc in self.collection.documents:
             if all(f(doc) for f in self.filters):
+                self.index_manager.remove(doc)
                 doc.update(changes)
+                self.index_manager.index(doc)
                 count += 1
+
+        self.collection._save()
         return {"updated": count}
+
 
     def delete(self):
         """
         Delete documents that match the current filters.
         Returns a dictionary with the count of deleted documents.
         """
-        before = len(self.documents)
-        self.documents[:] = [
-            doc for doc in self.documents if not all(f(doc) for f in self.filters)
+        if not self.collection:
+            raise RuntimeError("Cannot propagate delete without CollectionManager.")
+
+        before = len(self.collection.documents)
+        to_delete = [doc for doc in self.collection.documents if all(f(doc) for f in self.filters)]
+
+        for doc in to_delete:
+            self.index_manager.remove(doc)
+
+        self.collection.documents[:] = [
+            doc for doc in self.collection.documents if doc not in to_delete
         ]
-        return {"deleted": before - len(self.documents)}
+        self.collection._save()
+
+        return {"deleted": before - len(self.collection.documents)}
 
     def replace(self, new_doc):
         """
@@ -282,12 +317,19 @@ class QueryBuilder:
         new_doc -- The new document to replace matching documents with.
         Returns a dictionary with the count of replaced documents.
         """
+        if not self.collection:
+            raise RuntimeError("Cannot propagate replace without CollectionManager.")
+
         replaced = 0
-        for i, doc in enumerate(self.documents):
+        for i, doc in enumerate(self.collection.documents):
             if all(f(doc) for f in self.filters):
-                self.documents[i] = new_doc
+                self.index_manager.reindex(doc, new_doc)
+                self.collection.documents[i] = new_doc
                 replaced += 1
+
+        self.collection._save()
         return {"replaced": replaced}
+
 
     def count(self):
         """
@@ -467,6 +509,11 @@ class CollectionManager:
 
         self.documents = []
         self._load()
+        
+        self.index_manager = IndexManager()
+        for doc in self.documents:
+            self.index_manager.index(doc)
+        
         _collection_registry[name] = self
 
     def _load(self):
@@ -500,6 +547,7 @@ class CollectionManager:
         Returns a dictionary with the count of inserted documents.
         """
         self.documents.append(document)
+        self.index_manager.index(document)
         self._save()
         return {"inserted": 1}
 
@@ -510,6 +558,8 @@ class CollectionManager:
         Returns a dictionary with the count of inserted documents.
         """
         self.documents.extend(docs)
+        for doc in docs:
+            self.index_manager.index(doc)
         self._save()
         return {"inserted": len(docs)}
 
@@ -519,7 +569,7 @@ class CollectionManager:
         field -- The field to filter on.
         Returns a QueryBuilder instance to build the query.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).where(
+        return QueryBuilder(self.documents, all_collections=_collection_registry, collection_name=self.name).where(
             field
         )
 
@@ -625,6 +675,7 @@ class CollectionManager:
         """
         count = len(self.documents)
         self.documents = []
+        self.index_manager.clear()
         self._save()
         return {"cleared": count}
 
