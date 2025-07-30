@@ -19,4 +19,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    entry_points={
+        "console_scripts": [
+            "coffy-sql=coffy.cli.sql_cli:sql_cli",
+        ],
+    },
 )
