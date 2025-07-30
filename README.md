@@ -13,7 +13,8 @@ pip install coffy
 ```
 
 ---
-
+![preview](https://github.com/nsarathy/Coffy/blob/main/assets/Coffy%20preview%20image.png)
+---
 ## 🚀 Features
 
 - ✅ Local persistence (JSON, SQLite)
