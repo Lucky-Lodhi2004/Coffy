@@ -18,6 +18,7 @@
     - [Query entrypoints](#query-entrypoints)
     - [Aggregations (collection-level helpers)](#aggregations-collection-level-helpers)
     - [Maintenance & IO](#maintenance--io)
+    - [Visualization](#visualization)
 - [QueryBuilder](#querybuilder)
     - [Field selection](#field-selection)
     - [Comparison operators](#comparison-operators)
@@ -179,6 +180,22 @@ users.export("backup/users_export.json")
 users.clear()
 users.import_("backup/users_export.json")
 ```
+
+---
+
+#### Visualization
+
+You can visualize your collections using the built-in view function.
+```python
+view() -> None
+```
+
+**Example**
+```python
+users.view()
+```
+
+![NoSQL Visualization](https://github.com/nsarathy/Coffy/blob/main/assets/nosqlviz.png)
 
 ---
 

@@ -8,6 +8,7 @@ This engine supports basic CRUD operations, querying with filters, and aggregati
 
 from .atomicity import _atomic_save
 from .index_engine import IndexManager
+from .nosql_view import _view_nosql_collection
 import json
 import os
 import re
@@ -723,6 +724,13 @@ class CollectionManager:
         Returns a list of all documents.
         """
         return self.documents
+
+    def view(self):
+        """
+        View the collection in a user-friendly HTML format.
+        Opens the collection viewer in the default web browser.
+        """
+        _view_nosql_collection(self.documents, self.name)
 
 
 class DocList:

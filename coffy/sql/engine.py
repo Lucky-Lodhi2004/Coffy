@@ -49,7 +49,7 @@ def execute_query(sql: str):
         return {"status": "error", "message": str(e)}
 
 
-def close():
+def close_connection():
     """Close the database connection."""
     global _connection, _cursor
     if _cursor:

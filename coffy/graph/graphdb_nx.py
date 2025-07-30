@@ -7,6 +7,7 @@ A simple graph database using NetworkX.
 
 from .atomicity import _atomic_save
 from .graph_result import GraphResult
+from .graph_view import _view_graph
 import json
 import networkx as nx
 import os
@@ -29,10 +30,9 @@ class GraphDB:
         self.directed = directed
         self.in_memory = path == ":memory:"
 
-        if path:
-            if not path.endswith(".json"):
-                raise ValueError("Path must be to a .json file")
-            self.path = path
+        if path and not self.in_memory:
+            if path.endswith(".json"):
+                self.path = path
         else:
             self.in_memory = True
         if not self.in_memory and os.path.exists(self.path):
@@ -801,3 +801,9 @@ class GraphDB:
         """
         self.g.clear()
         self._persist()
+
+    def view(self):
+        """
+        Visualize the graph in a GUI window.
+        """
+        _view_graph(self.to_dict(), directed=self.directed)
