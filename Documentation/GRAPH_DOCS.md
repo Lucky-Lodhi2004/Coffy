@@ -24,6 +24,7 @@ Supports labeled nodes, typed relationships, projections, conditional filtering,
   - [Pattern matching](#pattern-matching)
   - [Export](#export)
   - [Saving query results](#saving-query-results)
+  - [Visualization](#visualization)
 - [Examples](#examples)
 - [Limitations and notes](#limitations-and-notes)
 
@@ -100,7 +101,7 @@ Use keyword filters in `find_*` methods.
 GraphDB(directed: bool = False, path: str | None = None)
 ```
 
-- `directed`: use `DiGraph` when `True`
+- `directed`: use `DiGraph` when `True`. If not set `False` by default.
 - `path`: JSON file for persistence. Use `":memory:"` for in-memory mode
 
 **Examples**
@@ -471,6 +472,13 @@ people = db.find_nodes(label="Person", fields=["id", "name"])
 db.save_query_result(people, "people.json")
 ```
 
+---
+### Visualization
+```python
+db.view()   # Opens an interactive graph visualization in a web browser
+```
+#### Example
+![Graph Visualization](https://github.com/nsarathy/Coffy/blob/main/assets/graphviz.png)
 ## Examples
 
 ```python

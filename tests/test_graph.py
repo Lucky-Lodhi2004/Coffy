@@ -269,4 +269,5 @@ class TestGraphDB(unittest.TestCase):
         self.assertEqual(self.db.count_nodes(), 0)
         self.assertEqual(self.db.count_relationships(), 0)
 
+
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
