@@ -1,7 +1,7 @@
 # coffy/sql/__init__.py
 # author: nsarathy
 
-from .engine import execute_query, initialize
+from .engine import execute_query, initialize, close_connection
 
 
 def init(path: str = None):
@@ -14,4 +14,9 @@ def query(sql: str):
     return execute_query(sql)
 
 
-__all__ = ["init", "query", "execute_query", "initialize"]
+def close():
+    """Close the database connection."""
+    close_connection()
+
+
+__all__ = ["init", "query", "close"]

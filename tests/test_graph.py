@@ -264,5 +264,10 @@ class TestGraphDB(unittest.TestCase):
         results = self.db.find_by_relationship_type("KNOWS", offset=10)
         self.assertEqual(len(results), 0)
 
+    def test_clear(self):
+        self.db.clear()
+        self.assertEqual(self.db.count_nodes(), 0)
+        self.assertEqual(self.db.count_relationships(), 0)
+
 
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
