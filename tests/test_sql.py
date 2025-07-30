@@ -1,8 +1,7 @@
 # tests/test_sql.py
 # author: nsarathy
 
-from coffy.sql import init, query
-from coffy.sql.engine import close
+from coffy.sql import init, query, close
 import os
 import tempfile
 import unittest

@@ -72,6 +72,14 @@ Save result as JSON:
 result.to_json("output.json")
 ```
 
+#### `.view(title: str")`
+Open result in browser as an HTML table:
+```python
+result.view(title="My Query Results")
+```
+
+![Example](https://github.com/nsarathy/Coffy/blob/main/assets/sqlviz.png)
+
 ---
 
 ## 🧪 Example Workflow

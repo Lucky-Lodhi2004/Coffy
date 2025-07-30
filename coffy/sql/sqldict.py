@@ -6,6 +6,7 @@ A dictionary-like object for SQL query results.
 """
 
 from collections.abc import Sequence
+from .sql_view import _show_sqldict_in_browser
 import csv
 import json
 
@@ -96,3 +97,10 @@ class SQLDict(Sequence):
 
         with open(path, mode="w", encoding="utf-8") as file:
             json.dump(self._data, file, indent=4)
+
+    def view(self, title: str = "SQL Query Results"):
+        """
+        Generate an HTML view of the SQLDict data.
+        title -- The title for the HTML page.
+        """
+        _show_sqldict_in_browser(self, title)
