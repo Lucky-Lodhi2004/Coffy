@@ -227,6 +227,7 @@ gt(value)     # numeric
 gte(value)
 lt(value)
 lte(value)
+between(a, b)  # numeric range inclusive
 in_(values: list)
 nin(values: list)
 matches(regex: str)   # regex on string value
