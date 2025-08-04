@@ -166,6 +166,16 @@ class QueryBuilder:
             and QueryBuilder._get_nested(d, self.current_field) <= value
         )
 
+    def between(self, a, b):
+        """
+        Filter documents where the current field is between the given values (inclusive).
+        a -- Value to range from.
+        b -- Value to range to.
+        Returns self to allow method chaining.
+        """
+        low, high = sorted((a, b))
+        return self.gte(low).lte(high)
+
     def in_(self, values):
         """
         Filter documents where the current field is in the given list of values.
@@ -454,6 +464,20 @@ class QueryBuilder:
         ]
         return max(values) if values else None
 
+    def distinct(self, field):
+        """
+        Get a sorted list of unique values for a specified field across all matching documents.
+        field -- The field to get distinct values for, can be a dotted path like "a.b.c".
+        Returns a sorted list of unique values as strings.
+            Missing fields are ignored. Mixed data types are coerced to strings.
+        """
+        values = set()
+        for doc in self.run():
+            value = QueryBuilder._get_nested(doc, field)
+            if value is not None:
+                values.add(str(value))
+        return sorted(list(values))
+
     # Lookup
     def lookup(
         self, foreign_collection_name, local_key, foreign_key, as_field, many=True
@@ -715,6 +739,14 @@ class CollectionManager:
         Returns the count of documents.
         """
         return QueryBuilder(self.documents).count()
+
+    def distinct(self, field):
+        """
+        Get a sorted list of unique values for a specified field across all documents.
+        field -- The field to get distinct values for, can be a dotted path like "a.b.c".
+        Returns a sorted list of unique values.
+        """
+        return QueryBuilder(self.documents).distinct(field)
 
     def first(self):
         """
