@@ -57,6 +57,29 @@ class QueryBuilder:
             doc = doc[k]
         return doc
 
+    @staticmethod
+    def _remove_nested(doc, dotted_key):
+        """
+        Remove a nested field from a document using a dotted key.
+        dotted_key -- A string representing the path to the field, e.g., "a.b.c".
+        Returns True if the field was removed, False if it didn't exist.
+        """
+        keys = dotted_key.split(".")
+        current = doc
+
+        # Navigate to the parent of the target field
+        for k in keys[:-1]:
+            if not isinstance(current, dict) or k not in current:
+                return False
+            current = current[k]
+
+        # Remove the target field
+        target_key = keys[-1]
+        if isinstance(current, dict) and target_key in current:
+            del current[target_key]
+            return True
+        return False
+
     def where(self, field):
         """
         Set the current field for filtering.
@@ -333,6 +356,33 @@ class QueryBuilder:
 
         self.collection._save()
         return {"replaced": replaced}
+
+    def remove_field(self, field):
+        """
+        Remove the specified field from documents that match the current filters.
+        field -- The field to remove, can be a dotted path like "a.b.c".
+        Returns a dictionary with the count of documents actually modified.
+        """
+        if not self.collection:
+            raise RuntimeError(
+                "Cannot propagate remove_field without CollectionManager."
+            )
+
+        removed_count = 0
+        for doc in self.collection.documents:
+            if all(f(doc) for f in self.filters):
+                # Remove old index before modifying the document
+                self.index_manager.remove(doc)
+
+                # Remove the field and check if it was actually removed
+                if QueryBuilder._remove_nested(doc, field):
+                    removed_count += 1
+
+                # Re-index the modified document
+                self.index_manager.index(doc)
+
+        self.collection._save()
+        return {"removed": removed_count}
 
     def count(self):
         """
@@ -724,6 +774,18 @@ class CollectionManager:
         Returns a list of all documents.
         """
         return self.documents
+
+    def remove_field(self, field):
+        """
+        Remove the specified field from all documents in the collection.
+        field -- The field to remove, can be a dotted path like "a.b.c".
+        Returns a dictionary with the count of documents actually modified.
+        """
+        return QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        ).remove_field(field)
 
     def view(self):
         """
