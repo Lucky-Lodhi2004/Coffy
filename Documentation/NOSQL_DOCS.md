@@ -291,6 +291,7 @@ users.not_any(lambda s: s.where("age").lt(30)).run().as_list()
 run(fields: list[str] | None = None) -> DocList
 count() -> int
 first() -> dict | None
+distinct(field: str) -> list[...]
 ```
 
 `run(fields=[...])` performs **projection**. Fields can be nested (`"a.b.c"`). Returned keys are the field names you requested.
@@ -302,6 +303,9 @@ users.where("age").gte(25).run(fields=["id", "name"]).as_list()
 
 users.where("address.city").exists().run(fields=["id", "address.city"]).as_list()
 # -> [{'id': 1, 'address.city': 'Indy'}, {'id': 2, 'address.city': 'Austin'}]
+
+users.where("address.city").distinct("address.city")
+# → ["Austin", "Indy", "Seattle"]
 ```
 
 #### Mutation
@@ -310,6 +314,7 @@ users.where("address.city").exists().run(fields=["id", "address.city"]).as_list(
 update(changes: dict) -> {"updated": N}
 delete() -> {"deleted": N}
 replace(new_doc: dict) -> {"replaced": N}
+remove_field(field: str) -> {"removed": N}
 ```
 
 **Examples**
@@ -322,6 +327,9 @@ users.where("name").eq("Carl").delete()
 
 # replace exact matches
 users.where("id").eq(2).replace({"id": 2, "name": "Bea Updated"})
+
+# remove a field
+users.where("name").eq("Neel").remove_field("rank")
 ```
 
 #### Aggregations (query-scoped)
