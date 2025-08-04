@@ -41,6 +41,19 @@ class TestCollectionManager(unittest.TestCase):
         self.assertEqual(gt_q.count(), 2)
         self.assertEqual(lt_q.count(), 2)
 
+    def test_between(self):
+        q = self.col.where("age").between(25, 35)
+        self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(30, 25)
+        self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(27, 35)
+        self.assertEqual(q.count(), 1)
+        self.assertEqual(q.first()["name"], "Alice")
+
     def test_exists(self):
         q = self.col.where("nested").exists()
         self.assertEqual(q.count(), 1)
@@ -282,6 +295,258 @@ class TestCollectionManager(unittest.TestCase):
             self.assertIn("vip", r)
             self.assertIn("total_spent", r)
         self.assertNotIn("age", r)  # `find()` excludes age
+
+    def test_remove_field_top_level(self):
+        """Test removing top-level fields from documents."""
+        self.col.clear()
+        self.col.add_many(
+            [
+                {"id": 1, "name": "Alice", "age": 30, "city": "Indy"},
+                {"id": 2, "name": "Bob", "age": 25, "city": "NYC"},
+                {"id": 3, "name": "Carl", "age": 35},
+            ]
+        )
+
+        # Remove 'city' field from all documents
+        result = self.col.remove_field("city")
+        self.assertEqual(result["removed"], 2)  # Only 2 docs had 'city' field
+
+        # Verify the field was removed
+        docs = self.col.all_docs()
+        self.assertEqual(len(docs), 3)
+        for doc in docs:
+            self.assertNotIn("city", doc)
+            self.assertIn("name", doc)  # Other fields should remain
+            self.assertIn("age", doc)
+
+    def test_remove_field_nested(self):
+        """Test removing nested fields using dot-notation."""
+        self.col.clear()
+        self.col.add_many(
+            [
+                {"id": 1, "name": "Alice", "profile": {"age": 30, "city": "Indy"}},
+                {"id": 2, "name": "Bob", "profile": {"age": 25}},
+                {"id": 3, "name": "Carl"},
+            ]
+        )
+
+        # Remove only the nested 'city' field from profiles
+        result = self.col.remove_field("profile.city")
+        self.assertEqual(result["removed"], 1)  # Only 1 doc had 'profile.city'
+
+        # Verify the nested field was removed
+        docs = self.col.all_docs()
+        self.assertEqual(len(docs), 3)
+
+        # Check Alice's document
+        alice = next(doc for doc in docs if doc["name"] == "Alice")
+        self.assertIn("profile", alice)
+        self.assertIn("age", alice["profile"])
+        self.assertNotIn("city", alice["profile"])
+
+        # Check Bob's document
+        bob = next(doc for doc in docs if doc["name"] == "Bob")
+        self.assertIn("profile", bob)
+        self.assertIn("age", bob["profile"])
+
+        # Check Carl's document (no profile)
+        carl = next(doc for doc in docs if doc["name"] == "Carl")
+        self.assertNotIn("profile", carl)
+
+    def test_remove_field_deeply_nested(self):
+        """Test removing deeply nested fields."""
+        self.col.clear()
+        self.col.add_many(
+            [
+                {
+                    "id": 1,
+                    "data": {"user": {"preferences": {"theme": "dark", "lang": "en"}}},
+                },
+                {"id": 2, "data": {"user": {"preferences": {"theme": "light"}}}},
+                {"id": 3, "data": {"user": {"name": "John"}}},
+            ]
+        )
+
+        # Remove deeply nested field
+        result = self.col.remove_field("data.user.preferences.theme")
+        self.assertEqual(result["removed"], 2)  # 2 docs had this field
+
+        # Verify the field was removed
+        docs = self.col.all_docs()
+        doc1 = next(doc for doc in docs if doc["id"] == 1)
+        doc2 = next(doc for doc in docs if doc["id"] == 2)
+        doc3 = next(doc for doc in docs if doc["id"] == 3)
+
+        self.assertNotIn("theme", doc1["data"]["user"]["preferences"])
+        self.assertIn("lang", doc1["data"]["user"]["preferences"])
+        self.assertNotIn("theme", doc2["data"]["user"]["preferences"])
+        self.assertIn("name", doc3["data"]["user"])
+
+    def test_remove_field_missing_field(self):
+        """Test removing fields that don't exist (should not error)."""
+        self.col.clear()
+        self.col.add_many([{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}])
+
+        # Try to remove non-existent fields
+        result1 = self.col.remove_field("nonexistent")
+        result2 = self.col.remove_field("deeply.nested.nonexistent")
+
+        self.assertEqual(result1["removed"], 0)
+        self.assertEqual(result2["removed"], 0)
+
+        # Documents should remain unchanged
+        docs = self.col.all_docs()
+        self.assertEqual(len(docs), 2)
+        for doc in docs:
+            self.assertIn("name", doc)
+
+    def test_remove_field_with_filter(self):
+        """Test removing fields only from documents matching a filter."""
+        self.col.clear()
+        self.col.add_many(
+            [
+                {"id": 1, "name": "Alice", "age": 30, "city": "Indy"},
+                {"id": 2, "name": "Bob", "age": 25, "city": "NYC"},
+                {"id": 3, "name": "Carl", "age": 35, "city": "LA"},
+            ]
+        )
+
+        # Remove 'city' only from documents where age > 28
+        result = self.col.where("age").gt(28).remove_field("city")
+        self.assertEqual(result["removed"], 2)  # Alice and Carl
+
+        # Verify the results
+        docs = self.col.all_docs()
+        alice = next(doc for doc in docs if doc["name"] == "Alice")
+        bob = next(doc for doc in docs if doc["name"] == "Bob")
+        carl = next(doc for doc in docs if doc["name"] == "Carl")
+
+        self.assertNotIn("city", alice)  # Removed (age 30)
+        self.assertIn("city", bob)  # Not removed (age 25)
+        self.assertNotIn("city", carl)  # Removed (age 35)
+
+    def test_remove_field_count_accuracy(self):
+        """Test that the returned count accurately reflects documents modified."""
+        self.col.clear()
+        self.col.add_many(
+            [
+                {"id": 1, "name": "Alice", "profile": {"age": 30, "city": "Indy"}},
+                {"id": 2, "name": "Bob", "profile": {"age": 25}},
+                {"id": 3, "name": "Carl"},
+                {"id": 4, "name": "Dave", "profile": {"age": 40, "city": "NYC"}},
+            ]
+        )
+
+        # Remove 'profile.city' - should affect 2 documents
+        result = self.col.remove_field("profile.city")
+        self.assertEqual(result["removed"], 2)
+
+        # Remove 'profile.age' - should affect 3 documents
+        result = self.col.remove_field("profile.age")
+        self.assertEqual(result["removed"], 3)
+
+        # Remove 'name' - should affect all 4 documents
+        result = self.col.remove_field("name")
+        self.assertEqual(result["removed"], 4)
+
+        # Try to remove non-existent field - should affect 0 documents
+        result = self.col.remove_field("nonexistent")
+        self.assertEqual(result["removed"], 0)
+
+    def test_distinct_basic_functionality(self):
+        users = db("distinct_users")
+        users.clear()
+        users.add_many(
+            [
+                {"name": "Alice", "city": "Austin"},
+                {"name": "Bob", "city": "Seattle"},
+                {"name": "Carol", "city": "Austin"},
+                {"name": "Dave", "city": "Indy"},
+                {"name": "Eve", "city": "Seattle"},
+            ]
+        )
+
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Indy", "Seattle"])
+        self.assertEqual(len(distinct_cities), 3)
+
+    def test_distinct_with_missing_fields(self):
+        users = db("distinct_missing")
+        users.clear()
+        users.add_many(
+            [
+                {"name": "Alice", "city": "Austin"},
+                {"name": "Bob"},  # No city field
+                {"name": "Carol", "city": "Austin"},
+                {"name": "Dave", "city": None},  # Explicit None
+                {"name": "Eve", "city": "Seattle"},
+            ]
+        )
+
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Seattle"])
+
+    def test_distinct_with_nested_fields(self):
+        users = db("distinct_nested")
+        users.clear()
+        users.add_many(
+            [
+                {"name": "Alice", "address": {"city": "Austin", "state": "TX"}},
+                {"name": "Bob", "address": {"city": "Seattle", "state": "WA"}},
+                {"name": "Carol", "address": {"city": "Austin", "state": "TX"}},
+                {"name": "Dave", "address": {"city": "Indy", "state": "IN"}},
+            ]
+        )
+
+        distinct_cities = users.distinct("address.city")
+        self.assertEqual(distinct_cities, ["Austin", "Indy", "Seattle"])
+
+    def test_distinct_with_mixed_data_types(self):
+        data = db("distinct_mixed")
+        data.clear()
+        data.add_many(
+            [
+                {"value": "hello"},
+                {"value": 42},
+                {"value": "hello"},  # duplicate string
+                {"value": 42.0},  # will be "42.0" as string
+                {"value": True},  # will be "True" as string
+                {"value": "world"},
+            ]
+        )
+
+        distinct_values = data.distinct("value")
+        expected = ["42", "42.0", "True", "hello", "world"]
+        self.assertEqual(distinct_values, expected)
+
+    def test_distinct_empty_result(self):
+        users = db("distinct_empty")
+        users.clear()
+        users.add_many(
+            [
+                {"name": "Alice"},
+                {"name": "Bob"},
+            ]
+        )
+
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, [])
+
+    def test_distinct_with_filters(self):
+        users = db("distinct_filtered")
+        users.clear()
+        users.add_many(
+            [
+                {"name": "Alice", "city": "Austin", "age": 30},
+                {"name": "Bob", "city": "Seattle", "age": 25},
+                {"name": "Carol", "city": "Austin", "age": 35},
+                {"name": "Dave", "city": "Indy", "age": 20},
+            ]
+        )
+
+        # Get distinct cities for users over 24
+        distinct_cities = users.where("age").gt(24).distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Seattle"])
 
 
 unittest.TextTestRunner().run(
