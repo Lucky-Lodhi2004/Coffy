@@ -143,6 +143,16 @@ class QueryBuilder:
             and QueryBuilder._get_nested(d, self.current_field) <= value
         )
 
+    def between(self, a, b):
+        """
+        Filter documents where the current field is between the given values (inclusive).
+        a -- Value to range from.
+        b -- Value to range to.
+        Returns self to allow method chaining.
+        """
+        low, high = sorted((a, b))
+        return self.gte(low).lte(high)
+
     def in_(self, values):
         """
         Filter documents where the current field is in the given list of values.

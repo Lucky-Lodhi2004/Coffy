@@ -21,6 +21,7 @@ class TestCollectionManager(unittest.TestCase):
             ]
         )
 
+
     def test_add_and_all_docs(self):
         result = self.col.all_docs()
         self.assertEqual(len(result), 3)
@@ -40,6 +41,19 @@ class TestCollectionManager(unittest.TestCase):
         lt_q = self.col.where("age").lt(40)
         self.assertEqual(gt_q.count(), 2)
         self.assertEqual(lt_q.count(), 2)
+
+    def test_between(self):
+        q = self.col.where("age").between(25, 35)
+        self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(30, 25)
+        self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(27, 35)
+        self.assertEqual(q.count(), 1)
+        self.assertEqual(q.first()["name"], "Alice")
 
     def test_exists(self):
         q = self.col.where("nested").exists()
