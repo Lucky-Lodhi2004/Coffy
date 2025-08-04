@@ -414,6 +414,20 @@ class QueryBuilder:
         ]
         return max(values) if values else None
 
+    def distinct(self, field):
+        """
+        Get a sorted list of unique values for a specified field across all matching documents.
+        field -- The field to get distinct values for, can be a dotted path like "a.b.c".
+        Returns a sorted list of unique values as strings.
+            Missing fields are ignored. Mixed data types are coerced to strings.
+        """
+        values = set()
+        for doc in self.run():
+            value = QueryBuilder._get_nested(doc, field)
+            if value is not None:
+                values.add(str(value))
+        return sorted(list(values))
+
     # Lookup
     def lookup(
         self, foreign_collection_name, local_key, foreign_key, as_field, many=True
@@ -675,6 +689,14 @@ class CollectionManager:
         Returns the count of documents.
         """
         return QueryBuilder(self.documents).count()
+
+    def distinct(self, field):
+        """
+        Get a sorted list of unique values for a specified field across all documents.
+        field -- The field to get distinct values for, can be a dotted path like "a.b.c".
+        Returns a sorted list of unique values.
+        """
+        return QueryBuilder(self.documents).distinct(field)
 
     def first(self):
         """

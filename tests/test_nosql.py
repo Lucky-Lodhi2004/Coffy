@@ -297,6 +297,89 @@ class TestCollectionManager(unittest.TestCase):
             self.assertIn("total_spent", r)
         self.assertNotIn("age", r)  # `find()` excludes age
 
+    def test_distinct_basic_functionality(self):
+        users = db("distinct_users")
+        users.clear()
+        users.add_many([
+            {"name": "Alice", "city": "Austin"},
+            {"name": "Bob", "city": "Seattle"},
+            {"name": "Carol", "city": "Austin"},
+            {"name": "Dave", "city": "Indy"},
+            {"name": "Eve", "city": "Seattle"},
+        ])
+        
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Indy", "Seattle"])
+        self.assertEqual(len(distinct_cities), 3)
+
+    def test_distinct_with_missing_fields(self):
+        users = db("distinct_missing")
+        users.clear()
+        users.add_many([
+            {"name": "Alice", "city": "Austin"},
+            {"name": "Bob"},  # No city field
+            {"name": "Carol", "city": "Austin"},
+            {"name": "Dave", "city": None},  # Explicit None
+            {"name": "Eve", "city": "Seattle"},
+        ])
+        
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Seattle"])
+
+    def test_distinct_with_nested_fields(self):
+        users = db("distinct_nested")
+        users.clear()
+        users.add_many([
+            {"name": "Alice", "address": {"city": "Austin", "state": "TX"}},
+            {"name": "Bob", "address": {"city": "Seattle", "state": "WA"}},
+            {"name": "Carol", "address": {"city": "Austin", "state": "TX"}},
+            {"name": "Dave", "address": {"city": "Indy", "state": "IN"}},
+        ])
+        
+        distinct_cities = users.distinct("address.city")
+        self.assertEqual(distinct_cities, ["Austin", "Indy", "Seattle"])
+
+    def test_distinct_with_mixed_data_types(self):
+        data = db("distinct_mixed")
+        data.clear()
+        data.add_many([
+            {"value": "hello"},
+            {"value": 42},
+            {"value": "hello"},  # duplicate string
+            {"value": 42.0},     # will be "42.0" as string
+            {"value": True},     # will be "True" as string
+            {"value": "world"},
+        ])
+        
+        distinct_values = data.distinct("value")
+        expected = ["42", "42.0", "True", "hello", "world"]
+        self.assertEqual(distinct_values, expected)
+
+    def test_distinct_empty_result(self):
+        users = db("distinct_empty")
+        users.clear()
+        users.add_many([
+            {"name": "Alice"},
+            {"name": "Bob"},
+        ])
+        
+        distinct_cities = users.distinct("city")
+        self.assertEqual(distinct_cities, [])
+
+    def test_distinct_with_filters(self):
+        users = db("distinct_filtered")
+        users.clear()
+        users.add_many([
+            {"name": "Alice", "city": "Austin", "age": 30},
+            {"name": "Bob", "city": "Seattle", "age": 25},
+            {"name": "Carol", "city": "Austin", "age": 35},
+            {"name": "Dave", "city": "Indy", "age": 20},
+        ])
+        
+        # Get distinct cities for users over 24
+        distinct_cities = users.where("age").gt(24).distinct("city")
+        self.assertEqual(distinct_cities, ["Austin", "Seattle"])
+
 
 unittest.TextTestRunner().run(
     unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager)
