@@ -470,14 +470,6 @@ print(res)                  # pretty-printed rows
 
 ---
 
-## Performance & Limits
-
-- **No indexes**; all queries scan the list.
-- Fine for thousands to tens of thousands of documents on a laptop; beyond that, consider indexing or a real database.
-- Single-process only; no file locking or transactions.
-
----
-
 ## Example: end-to-end
 
 ```python
