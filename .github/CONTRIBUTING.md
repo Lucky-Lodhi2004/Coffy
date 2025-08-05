@@ -34,7 +34,7 @@ Thanks for your interest in improving Coffy! We welcome contributions of all kin
 
 ---
 ### gitignore
-Refer [Discussion 57]([url](https://github.com/nsarathy/Coffy/discussions/57))
+Refer [Discussion 57](https://github.com/nsarathy/Coffy/discussions/57)
 
 ---
 
