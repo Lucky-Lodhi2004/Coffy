@@ -502,9 +502,3 @@ pattern = [
 db.match_full_path(start={"name": "Alice"}, pattern=pattern,
                    node_fields=["id", "name"], rel_fields=["type", "title"])
 ```
-
-## Limitations and notes
-- Single-process focus. No concurrency control.
-- No transactions or rollback.
-- Performance depends on `networkx` and graph size.
-- Labels and types are stored internally as `_labels` and `_type` and exported as `labels` and `type`.

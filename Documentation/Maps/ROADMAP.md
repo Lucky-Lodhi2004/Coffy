@@ -27,11 +27,8 @@ It spans NoSQL, SQL, and Graph modules and aims to improve developer experience,
 
 | Goal | Description |
 |------|-------------|
-| GUI Viewer | Visual database inspector for embedded/local use |
-| Real-Time Mode | File watcher or sync mode for dynamic updates |
 | Indexing in GraphDB | Field and structure-based indexing for graph queries |
 | NoSQL Schema Validation | Optional schema system with type checks and constraints |
-| Graph Visualizer | Export to D3.js/Graphviz or interactive HTML view |
 | Hybrid Query Router | Chain filters across NoSQL/SQL/Graph in unified syntax |
 | Public Test Dataset Repo | Curated JSONs and SQL for benchmarking and testing |
 | WebAssembly Build | Run Coffy in-browser (via Pyodide or WASM) for demos or tools |

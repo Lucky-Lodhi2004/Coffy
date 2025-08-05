@@ -605,6 +605,9 @@ class CollectionManager:
             try:
                 with open(self.path, "r", encoding="utf-8") as f:
                     self.documents = json.load(f)
+                self.index_manager.clear()
+                for doc in self.documents:
+                    self.index_manager.index(doc)
             except FileNotFoundError:
                 os.makedirs(os.path.dirname(self.path), exist_ok=True)
                 self.documents = []
@@ -781,6 +784,9 @@ class CollectionManager:
         """
         with open(path, "r", encoding="utf-8") as f:
             self.documents = json.load(f)
+        self.index_manager.clear()
+        for doc in self.documents:
+            self.index_manager.index(doc)
         self._save()
 
     def all(self):
