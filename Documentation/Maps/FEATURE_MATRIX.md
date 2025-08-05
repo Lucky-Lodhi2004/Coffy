@@ -11,7 +11,7 @@
 | **Projections** (select specific fields) | ✅ (`fields=[...]`) | ✅ (`SELECT cols`)     | ✅                       | All support limited projections                       |
 | **Full-Text Search / Regex**             | ✅ (`matches()`)    | ⚠️ (LIKE only)         | ❌                       | Only `nosql` supports regex matching                  |
 | **Aggregations (sum, avg, min, max)**    | ✅                  | ✅                     | ✅                       | GraphDB supports field + graph-level aggregations     |
-| **Indexing**                             | ✅                  | ✅ (SQLite)            | ❌                       | Indexes are not available in `GraphDB`                |
+| **Indexing**                             | ✅                  | ✅ (SQLite)            | ❌                       | Indexes not implemented for graphs                |
 | **Transactions / Rollback**              | ❌                  | ✅                     | ❌                       | Only `sql` has ACID semantics via SQLite              |
 | **Custom Relationships / Edge Types**    | ❌                  | ❌                     | ✅                       | `graph` has `_type` and attributes on edges           |
 | **Directional Traversals**               | ❌                  | ❌                     | ✅                       | Supports directed + undirected graphs                 |
@@ -20,7 +20,7 @@
 | **Export / Save Query Results**          | ✅ (`to_json()`)    | ✅ (`to_json()`)       | ✅ (`save_query_result`) | All can save JSON output                              |
 | **Import / Load from JSON**              | ✅ (`import_()`)    | ❌                     | ✅ (`load(path)`)        | SQL must load via SQL                                 |
 | **CLI Tooling**                          | ❌                  | ❌                     | ❌                       | Would be a useful enhancement                         |
-| **GUI / Visualization**                  | ❌                  | ❌                     | ❌                       | Not yet implemented; graph would benefit most         |
+| **GUI / Visualization**                  | ✅                  | ✅                     | ✅                       | `view()`         |
 | **One-to-Many Lookups**                  | ✅                  | ✅                     | ❌                       | Now fully supported in `nosql`                        |
 | **Custom Field Indexing**                | ❌                  | ✅                     | ❌                       | Needed for performance scaling in `nosql` and `graph` |
 | **Schema Validation**                    | ❌                  | ✅                     | ❌                       | SQLite enforces schema; `nosql` is fully dynamic      |
