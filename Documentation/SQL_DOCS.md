@@ -1,4 +1,4 @@
-# `coffy.sql`
+# coffy.sql
 
 A tiny, zero‑dependency wrapper around `sqlite3` that gives you:
 * one‑liner database **initialise/query/close** calls  
