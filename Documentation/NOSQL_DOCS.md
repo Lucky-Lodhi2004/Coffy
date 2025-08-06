@@ -112,7 +112,7 @@ users.add_many([{"id": 5}, {"id": 6, "active": True}])
 #### Query entrypoints
 
 ```python
-where(field: str) -> QueryBuilder
+where(field: str) -> QueryBuilder      # starts a query
 match_any(*builders) -> QueryBuilder   # OR across sub-queries
 match_all(*builders) -> QueryBuilder   # AND across sub-queries
 not_any(*builders)  -> QueryBuilder    # NOT( OR(sub-queries) )
@@ -145,12 +145,12 @@ users.not_any(
 #### Aggregations (collection-level helpers)
 
 ```python
-sum(field: str) -> number
-avg(field: str) -> float
-min(field: str) -> number | None
-max(field: str) -> number | None
-count() -> int
-first() -> dict | None
+sum(field: str) -> number           # sum of numeric field values
+avg(field: str) -> float            # average of numeric field values
+min(field: str) -> number | None    # minimum value of numeric field
+max(field: str) -> number | None    # maximum value of numeric field
+count() -> int                      # count of documents in the collection
+first() -> dict | None              # first document in the collection
 ```
 
 **Examples**
@@ -166,12 +166,12 @@ users.first()         # first document in the collection
 #### Maintenance & IO
 
 ```python
-clear() -> {"cleared": N}
-export(path: str) -> None
-import_(path: str) -> None
-save(path: str) -> None
-all() -> list[dict]
-all_docs() -> list[dict]
+clear() -> {"cleared": N}   # clears the collection
+export(path: str) -> None   # exports to JSON file
+import_(path: str) -> None  # imports from JSON file
+save(path: str) -> None     # saves to the specified path
+all() -> list[dict]         # all documents in the collection
+all_docs() -> list[dict]    # alias for all()
 ```
 
 **Examples**
@@ -221,17 +221,17 @@ users.where("profile.stats.score").gte(9000)
 #### Comparison operators
 
 ```python
-eq(value)
-ne(value)
-gt(value)     # numeric
-gte(value)
-lt(value)
-lte(value)
-between(a, b)  # numeric range inclusive
-in_(values: list)
-nin(values: list)
-matches(regex: str)   # regex on string value
-exists()
+eq(value)           # equality
+ne(value)           # not equal
+gt(value)           # numeric greater than
+gte(value)          # numeric greater than or equal
+lt(value)           # numeric less than
+lte(value)          # numeric less than or equal
+between(a, b)       # numeric range inclusive
+in_(values: list)   # membership in a list
+nin(values: list)   # not in a list
+matches(regex: str) # regex on string value
+exists()            # field exists (not null or missing)
 ```
 
 **Examples**
@@ -253,6 +253,7 @@ users.where("address.city").exists().run()
 ```
 
 #### Logic grouping
+These are not suggested to be used directly, but are available through the collection helpers, `match_any`, `match_all`, and `not_any`.
 
 ```python
 _and(*builders)   # all sub-queries must match
@@ -288,10 +289,10 @@ users.not_any(lambda s: s.where("age").lt(30)).run().as_list()
 #### Execution
 
 ```python
-run(fields: list[str] | None = None) -> DocList
-count() -> int
-first() -> dict | None
-distinct(field: str) -> list[...]
+run(fields: list[str] | None = None) -> DocList # runs the query
+count() -> int                                  # counts documents after filtering
+first() -> dict | None                          # returns the first document after filtering
+distinct(field: str) -> list[...]               # returns unique values for a field after filtering
 ```
 
 `run(fields=[...])` performs **projection**. Fields can be nested (`"a.b.c"`). Returned keys are the field names you requested.
@@ -311,10 +312,10 @@ users.where("address.city").distinct("address.city")
 #### Mutation
 
 ```python
-update(changes: dict) -> {"updated": N}
-delete() -> {"deleted": N}
-replace(new_doc: dict) -> {"replaced": N}
-remove_field(field: str) -> {"removed": N}
+update(changes: dict) -> {"updated": N}     # updates matching documents with new fields
+delete() -> {"deleted": N}                  # deletes matching documents
+replace(new_doc: dict) -> {"replaced": N}   # replaces matching documents with new ones
+remove_field(field: str) -> {"removed": N}  # removes a field from matching documents
 ```
 
 **Examples**
@@ -336,10 +337,10 @@ users.where("name").eq("Neel").remove_field("rank")
 
 These work **after** filtering:
 ```python
-sum(field)
-avg(field)
-min(field)
-max(field)
+sum(field)      # sum of numeric field values
+avg(field)      # average of numeric field values
+min(field)      # minimum value of numeric field
+max(field)      # maximum value of numeric field
 ```
 
 **Examples**
