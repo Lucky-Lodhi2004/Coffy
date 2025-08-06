@@ -20,8 +20,10 @@ class SQLDict(Sequence):
         """
         Initialize with a list of dictionaries or a single dictionary.
         data -- list or dict - The SQL query results.
+        columns -- List of column names derived from the SQL results, returns empty list if no rows are returned.
         """
         self._data = data if isinstance(data, list) else [data]
+        self.columns = list(self._data[0].keys()) if self._data else []
 
     def __getitem__(self, index):
         """
