@@ -774,6 +774,8 @@ class CollectionManager:
         Export the collection to a JSON file.
         path -- The file path to export the collection.
         """
+        if not path.endswith(".json"):
+            raise ValueError("Invalid file format. Please use a .json file.")
         _atomic_save(self.documents, path)
 
     def import_(self, path):
