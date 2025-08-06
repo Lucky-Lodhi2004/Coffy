@@ -1,4 +1,4 @@
-# ☕ Coffy: Local-First Embedded Database Engine for Python
+# Coffy: Local-First Embedded Database Engine for Python
 
 [![PyPI](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
 
@@ -6,7 +6,7 @@
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 pip install coffy
@@ -15,17 +15,17 @@ pip install coffy
 ---
 ![preview](https://github.com/nsarathy/Coffy/blob/main/assets/Coffy%20preview%20image.png)
 ---
-## 🚀 Features
+## Features
 
-- ✅ Local persistence (JSON, SQLite)
-- ✅ In-memory mode (`:memory:` or `None`)
-- ✅ No server needed
-- ✅ Logical and comparison operators
-- ✅ Unified query interface
+- Local persistence (JSON, SQLite)
+- In-memory mode (`:memory:` or `None`)
+- No server needed
+- Logical and comparison operators
+- Unified query interface
 
 ---
 
-## 🧠 Engines
+## Engines
 
 | Engine | Description | Docs |
 |--------|-------------|------|
@@ -61,6 +61,6 @@ Only pure-Python embedded document store with:
 
 ---
 
-## ⚖️ License
+## License
 
 MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)

@@ -1,125 +1,119 @@
-# 📘 Coffy SQL Database
+# `coffy.sql`
 
-A lightweight SQL database wrapper around SQLite with zero dependencies. Load, query, and persist relational data using standard SQL syntax via a minimal Python API.
-
-Author: nsarathy
+A tiny, zero‑dependency wrapper around `sqlite3` that gives you:
+* one‑liner database **initialise/query/close** calls  
+* a **`SQLDict`** result object with pretty `print`, HTML viewing, and CSV / JSON export  
+* sensible defaults (in‑memory DB if you don’t specify a path)
 
 ---
 
-## 🛠️ Getting Started
+## Table of Contents
+- [Quick‑start](#quick-start)
+- [Public API](#public-api)
+    - [`init(path: str | None = None)`](#initpath-str--none--none-)
+    - [`query(sql: str)`](#querysql-str)
+    - [`close()`](#close)
+- [`SQLDict`](#sqldict--result-wrapper)
+    - [`__repr__()`](#__repr__)
+    - [`as_list()`](#as_list)
+    - [`to_csv(path)`](#to_csvpath)
+    - [`to_json(path)`](#to_jsonpath)
+    - [`view(title: str = "SQL Query Results")`](#viewtitle-str---sql-query-results-)
+- [Usage Examples](#usage-examples)
 
-### Initialization
+---
 
-You can use an **in-memory database** (default) or **load/save from disk** by specifying a path:
+## Quick‑start
 
 ```python
 from coffy.sql import init, query
 
-# In-memory database (default)
-init()
-
-# OR persistent database file
-init("my_database.sqlite")
-```
-
----
-
-## 🔍 Executing Queries
-
-Once initialized, you can use standard SQL queries to interact with the database:
-
-```python
-# Create a table
-query("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)")
-
-# Insert data
-query("INSERT INTO users (id, name, email) VALUES (1, 'Neel', 'neel@a.com')")
-
-# Query data
+init("users.sqlite")                      # create / open DB
+query("CREATE TABLE users (id INT, name TEXT)")
+query("INSERT INTO users VALUES (1, 'Neel')")
 result = query("SELECT * FROM users")
-print(result)
+print(result)                             # pretty table in your terminal
+result.to_json("users.json")              # export
 ```
+> You can run any valid SQLite statement with `query(...)`.
+---
 
-> 💡 You can run **any valid SQLite query** — DDL, DML, joins, aggregates, etc.  
-> No need to learn a custom query language.
+## Public API
+
+### `init(path: str | None = None)`
+Open (or create) an SQLite database.  
+*If `path` is `None`, an in‑memory DB is used.*
+
+### `query(sql: str)`
+Run any SQL statement.  
+*Returns*  
+- **`SQLDict`** for `SELECT` queries  
+- `{"status": "success", "rows_affected": n}` for mutating queries  
+
+### `close()`
+Closes the current connection & cursor. Safe to call multiple times.
 
 ---
 
-## 📄 SQLDict Result Object
+## `SQLDict` – Result Wrapper
 
-Queries that return rows (e.g. `SELECT`) return a `SQLDict` object — a list-like, enhanced wrapper.
+### `__repr__()`
+Pretty‑prints the result set as an ASCII table when you `print(result)` or inspect it in a REPL.
 
-### Key Features
+### `as_list()`
+Returns the raw data as `List[Dict[str, Any]]`.
 
-#### `__repr__()`
-Pretty tabular output in console.
+### `to_csv(path)`
+Writes the result to a CSV file at *path*.
 
-#### `.as_list()`
-Returns raw list of dictionaries:
-```python
-rows = result.as_list()
-```
+### `to_json(path)`
+Writes the result to a JSON file at *path* (pretty‑printed).
 
-#### `.to_csv(path: str)`
-Save result as CSV:
-```python
-result.to_csv("output.csv")
-```
-
-#### `.to_json(path: str)`
-Save result as JSON:
-```python
-result.to_json("output.json")
-```
-
-#### `.view(title: str")`
-Open result in browser as an HTML table:
-```python
-result.view(title="My Query Results")
-```
+### `view(title: str = "SQL Query Results")`
+Launches your default browser with an HTML table for interactive viewing.
 
 ![Example](https://github.com/nsarathy/Coffy/blob/main/assets/sqlviz.png)
 
 ---
 
-## 🧪 Example Workflow
+## Usage Examples
+
+**Example 1**
 
 ```python
-from coffy.sql import init, query
-
 # Initialize database
 init("users.sqlite")
 
-# Create and populate
+# Create & populate
 query("CREATE TABLE users (id INTEGER, name TEXT)")
 query("INSERT INTO users VALUES (1, 'Neel')")
 query("INSERT INTO users VALUES (2, 'Tanaya')")
 
-# Run SQL query
+# Filter
 result = query("SELECT * FROM users WHERE id > 1")
-
-# Display as table
-print(result)
-
-# Export to JSON
+print(result)              # tabular view
 result.to_json("filtered_users.json")
 ```
 
----
+**Example 2**
 
-## 🗃️ Persistence
+```python
+from coffy.sql import init, query, close
 
-- If you call `init()` with a path, the database is persisted to disk.
-- If no path is passed, a temporary in-memory SQLite database is used.
-- You can copy the `.sqlite` file manually or reuse it by re-initializing with the same path.
+init(r"C:\Users\neel3\Everything\Coffy\test_data\sql.db")
 
----
+query("DELETE FROM users")  # clear
+query("""CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    age INTEGER,
+    occupation TEXT,
+    city TEXT
+)""")
+query("INSERT INTO users (name, age, occupation, city) VALUES ('Alice', 30, 'Wonderland', 'Wonderland')")
+query("INSERT INTO users (name, age, occupation) VALUES ('Bob', 25, 'Engineer')")
+query("INSERT INTO users (name, age, occupation, city) VALUES ('Charlie', 35, 'Electrician', 'New York')")
 
-## 🧼 Design Principles
-
-- Full power of SQLite via simple wrapper
-- No ORMs, no boilerplate, just raw SQL
-- Tabular result formatting for easy reading
-- Minimal API surface
-
----
+print(query("SELECT * FROM users"))
+close()
+```

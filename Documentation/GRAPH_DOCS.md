@@ -1,4 +1,4 @@
-# GraphDB
+# coffy.graph
 
 A lightweight, Cypher-inspired graph engine built on top of `networkx`.  
 Supports labeled nodes, typed relationships, projections, conditional filtering, directional traversals, and JSON persistence.
