@@ -56,6 +56,13 @@ class TestSQLModule(unittest.TestCase):
         result = query("SELECT * FROM users WHERE id = 1")
         output = str(result)
         self.assertIn("Neel", output)
+        self.assertIn("1 rows x 3 cols", output)
+
+    def test_repr_output_empty(self):
+        result = query("SELECT * FROM users WHERE id = 0")
+        output = str(result)
+        self.assertIn("<empty result>", output)
+        self.assertIn("0 rows x 0 cols", output)
 
     def test_export_json_and_csv(self):
         result = query("SELECT * FROM users")

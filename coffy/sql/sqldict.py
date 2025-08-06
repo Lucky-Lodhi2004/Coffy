@@ -44,7 +44,7 @@ class SQLDict(Sequence):
         Returns a formatted string of the SQLDict.
         """
         if not self._data:
-            return "<empty result>"
+            return "<empty result>\n\n0 rows x 0 cols"
 
         # Get all column names
         columns = list(self._data[0].keys())
@@ -65,7 +65,15 @@ class SQLDict(Sequence):
             )
             rows.append(row_str)
 
-        return f"{header}\n{line}\n" + "\n".join(rows)
+        # Counts of rows and columns
+        col_count = len(self._data[0])
+        row_count = len(self._data)
+
+        return (
+            f"{header}\n{line}\n"
+            + "\n".join(rows)
+            + f"\n\n{row_count} rows x {col_count} cols"
+        )
 
     def as_list(self):
         """
