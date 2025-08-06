@@ -1,4 +1,4 @@
-# Coffy NoSQL Engine
+# coffy.nosql
 
 - Embedded NoSQL document store with a fluent, chainable query API
 - Supports nested fields, logical filters, aggregations, projections, and joins
