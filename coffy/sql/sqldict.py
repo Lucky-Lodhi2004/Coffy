@@ -39,7 +39,7 @@ class SQLDict(Sequence):
         Returns the length of the data.
         """
         return len(self._data)
-    
+
     def __columns__(self):
         """
         Get the list of column names.
