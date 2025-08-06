@@ -75,6 +75,18 @@ class TestSQLModule(unittest.TestCase):
         os.remove(temp_json)
         os.remove(temp_csv)
 
+    def test_column_property(self):
+        result = query("SELECT * FROM users WHERE id = 1")
+        self.assertEqual(result.columns, ["id", "name", "age"])
+
+    def test_column_property_empty(self):
+        result = query("SELECT * FROM users WHERE 1=0")
+        self.assertEqual(result.columns, [])
+
+    def test_column_property_out_of_order(self):
+        result = query("SELECT * FROM users ORDER BY age DESC")
+        self.assertNotEqual(result.columns, ["id", "age", "name"])
+
 
 unittest.TextTestRunner().run(
     unittest.TestLoader().loadTestsFromTestCase(TestSQLModule)
