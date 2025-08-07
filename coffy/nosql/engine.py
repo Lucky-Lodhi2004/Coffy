@@ -118,7 +118,11 @@ class CollectionManager:
         conditions -- Functions that take a QueryBuilder instance and modify its filters.
         Returns a QueryBuilder instance with the combined conditions.
         """
-        q = QueryBuilder(self.documents, all_collections=_collection_registry)
+        q = QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        )
         return q._or(*conditions)
 
     def match_all(self, *conditions):
@@ -127,7 +131,11 @@ class CollectionManager:
         conditions -- Functions that take a QueryBuilder instance and modify its filters.
         Returns a QueryBuilder instance with the combined conditions.
         """
-        q = QueryBuilder(self.documents, all_collections=_collection_registry)
+        q = QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        )
         return q._and(*conditions)
 
     def not_any(self, *conditions):
@@ -136,7 +144,11 @@ class CollectionManager:
         conditions -- Functions that take a QueryBuilder instance and modify its filters.
         Returns a QueryBuilder instance with the negated conditions.
         """
-        q = QueryBuilder(self.documents, all_collections=_collection_registry)
+        q = QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        )
         return q._not(lambda nq: nq._or(*conditions))
 
     def lookup(self, *args, **kwargs):
@@ -147,7 +159,9 @@ class CollectionManager:
         Returns a QueryBuilder instance with the lookup applied.
         """
         return QueryBuilder(
-            self.documents, all_collections=_collection_registry
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
         ).lookup(*args, **kwargs)
 
     def merge(self, *args, **kwargs):
@@ -157,9 +171,11 @@ class CollectionManager:
         kwargs -- Keyword arguments for the merge.
         Returns a QueryBuilder instance with the merge applied.
         """
-        return QueryBuilder(self.documents, all_collections=_collection_registry).merge(
-            *args, **kwargs
-        )
+        return QueryBuilder(
+            self.documents,
+            all_collections=_collection_registry,
+            collection_name=self.name,
+        ).merge(*args, **kwargs)
 
     def sum(self, field):
         """
