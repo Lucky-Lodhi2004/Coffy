@@ -1,10 +1,10 @@
-# 📘 Advanced SQL Examples for Coffy
+# Advanced SQL Examples for Coffy
 
 These examples demonstrate advanced SQL workflows using the `coffy.sql` module with SQLite. They go beyond basic queries by including joins, filtering, grouping, and exporting results  all without using any ORM.
 
 ---
 
-## 🧪 Example 1: Filter High Salary Employees and Export to CSV
+## Example 1: Filter High Salary Employees and Export to CSV
 
 This example filters employees based on a salary threshold, selects only required fields, and exports the result to CSV.
 
@@ -25,7 +25,7 @@ print(result)
 result.to_csv("high_salary_employees.csv")
 ```
 
-### 🖨️ Output:
+### Output:
 
 ```sql
 name  | role    
@@ -36,13 +36,13 @@ Zara  | Developer
 
 
 
-## 📊 Example 2: Group Sales by Region and Calculate Totals
+## Example 2: Group Sales by Region and Calculate Totals
 
 This example demonstrates how to aggregate sales data by region using SQL's `GROUP BY` and `SUM()` functions. It outputs total sales per region and saves the result to a CSV file.
 
 ---
 
-### 🧾 Code
+### Code
 
 ```python
 from coffy.sql import init, query
@@ -67,7 +67,7 @@ print(result)
 # Export result to a CSV file
 result.to_csv("region_sales_summary.csv")
 ```
-### 🖨️ Output:
+### Output:
 ```sql
 region | total_sales
 -------+------------
