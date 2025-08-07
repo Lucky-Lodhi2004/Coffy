@@ -45,7 +45,6 @@ class CollectionManager:
         self.index_manager = IndexManager()
         self._load()
 
-
         for doc in self.documents:
             self.index_manager.index(doc)
 

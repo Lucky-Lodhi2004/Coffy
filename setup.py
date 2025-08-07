@@ -16,11 +16,11 @@ setup(
     include_package_data=True,
     license="MIT",
     license_files=["LICENSE"],
-    urls = {
+    urls={
         "Website": "https://coffydb.org",
         "Source": "https://github.com/nsarathy/coffy",
         "Bug Reports & Feature Requests": "https://github.com/nsarathy/coffy/issues",
-        "Discussions": "https://github.com/nsarathy/coffy/discussions"
+        "Discussions": "https://github.com/nsarathy/coffy/discussions",
     },
     classifiers=[
         "Programming Language :: Python :: 3",

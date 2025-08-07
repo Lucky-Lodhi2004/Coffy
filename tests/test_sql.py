@@ -88,6 +88,8 @@ class TestSQLModule(unittest.TestCase):
         self.assertNotEqual(result.columns, ["id", "age", "name"])
 
 
+print("SQL tests:")
+
 unittest.TextTestRunner().run(
     unittest.TestLoader().loadTestsFromTestCase(TestSQLModule)
 )

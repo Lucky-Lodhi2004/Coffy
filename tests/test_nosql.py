@@ -549,6 +549,8 @@ class TestCollectionManager(unittest.TestCase):
         self.assertEqual(distinct_cities, ["Austin", "Seattle"])
 
 
+print("NoSQL tests:")
+
 unittest.TextTestRunner().run(
     unittest.TestLoader().loadTestsFromTestCase(TestCollectionManager)
 )
