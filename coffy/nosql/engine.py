@@ -42,9 +42,10 @@ class CollectionManager:
             self.in_memory = True
 
         self.documents = []
+        self.index_manager = IndexManager()
         self._load()
 
-        self.index_manager = IndexManager()
+
         for doc in self.documents:
             self.index_manager.index(doc)
 
