@@ -76,6 +76,14 @@ class TestGraphDB(unittest.TestCase):
         self.db.remove_relationship("A", "B")
         self.assertFalse(self.db.has_relationship("A", "B"))
 
+    def test_remove_relationships_by_type(self):
+        self.db.add_relationship("A", "C", rel_type="KNOWS OF", since=2010)
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS"), 2)
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS OF"), 1)
+        self.db.remove_relationships_by_type("KNOWS")
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS"), 0)
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS OF"), 1)
+
     def test_find_nodes_basic(self):
         results = self.db.find_nodes(name="Alice")
         self.assertEqual(len(results), 1)

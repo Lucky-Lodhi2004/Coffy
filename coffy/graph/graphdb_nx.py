@@ -157,6 +157,17 @@ class GraphDB:
         self.g.remove_edge(source, target)
         self._persist()
 
+    def remove_relationships_by_type(self, type):
+        """
+        Remove all relationships of a specific type.
+        type -- Type of the relationship to remove.
+        """
+        edges_to_remove = [
+            (u, v) for u, v, a in self.g.edges(data=True) if a.get("_type") == type
+        ]
+        self.g.remove_edges_from(edges_to_remove)
+        self._persist()
+
     # Basic queries
     def neighbors(self, node_id):
         """
