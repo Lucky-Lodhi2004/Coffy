@@ -81,4 +81,6 @@ class TestSQLCli(unittest.TestCase):
         self.assertIn("Closed SQL engine connection.", result.output)
 
 
+print("SQL CLI tests:")
+
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestSQLCli))

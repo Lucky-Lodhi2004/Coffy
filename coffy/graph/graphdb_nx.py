@@ -109,6 +109,17 @@ class GraphDB:
         self.g.remove_node(node_id)
         self._persist()
 
+    def remove_nodes_by_label(self, label):
+        """
+        Remove all nodes with a specific label.
+        label -- The label of the nodes to remove.
+        """
+        nodes_to_remove = [
+            n for n, a in self.g.nodes(data=True) if label in a.get("_labels", [])
+        ]
+        self.g.remove_nodes_from(nodes_to_remove)
+        self._persist()
+
     # Relationship (edge) operations
     def add_relationship(self, source, target, rel_type=None, **attrs):
         """
@@ -601,6 +612,15 @@ class GraphDB:
         Count the number of nodes in the graph.
         """
         return self.g.number_of_nodes()
+
+    def count_nodes_by_label(self, label):
+        """
+        Count the number of nodes with a specific label.
+        label -- The label to count.
+        """
+        return sum(
+            1 for n, a in self.g.nodes(data=True) if label in a.get("_labels", [])
+        )
 
     def count_relationships(self):
         """

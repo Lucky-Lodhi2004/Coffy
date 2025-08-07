@@ -42,6 +42,20 @@ class TestGraphDB(unittest.TestCase):
         self.db.remove_node("C")
         self.assertFalse(self.db.has_node("C"))
 
+    def test_remove_node_by_label(self):
+        self.db.add_nodes(
+            [
+                {"id": "D", "_labels": ["Penguin"], "name": "Dan", "age": 30},
+                {"id": "E", "_labels": ["Penguin"], "name": "Eve", "age": 25},
+                {"id": "F", "_labels": ["Fish"], "name": "Fido", "age": 5},
+            ]
+        )
+        self.db.remove_nodes_by_label("Penguin")
+        self.db.remove_nodes_by_label("NonExistentLabel")  # Should not raise error
+        self.assertFalse(self.db.has_node("D"))
+        self.assertFalse(self.db.has_node("E"))
+        self.assertTrue(self.db.has_node("F"))
+
     def test_add_and_get_relationship(self):
         rel = self.db.get_relationship("A", "B")
         self.assertEqual(rel["_type"], "KNOWS")
@@ -173,6 +187,16 @@ class TestGraphDB(unittest.TestCase):
         self.assertEqual(self.db.count_relationships_by_type("KNOWS"), 2)
         self.assertEqual(self.db.count_relationships_by_type("KNOWS OF"), 1)
         self.assertEqual(self.db.count_relationships_by_type("DOESNT KNOW"), 0)
+        self.db.add_nodes(
+            [
+                {"id": "DO", "_labels": ["Orangutan"], "name": "Dan", "age": 30},
+                {"id": "EO", "_labels": ["Orangutan"], "name": "Eve", "age": 25},
+                {"id": "FO", "_labels": ["Shark"], "name": "Fido", "age": 5},
+            ]
+        )
+        self.assertEqual(self.db.count_nodes_by_label("Orangutan"), 2)
+        self.assertEqual(self.db.count_nodes_by_label("Shark"), 1)
+        self.assertEqual(self.db.count_nodes_by_label("NonExistentLabel"), 0)
 
     def test_graph_result_aggregates(self):
         res = self.db.find_nodes(label="Person", fields=["name", "age"])
@@ -284,4 +308,5 @@ class TestGraphDB(unittest.TestCase):
         self.assertEqual(self.db.count_relationships(), 0)
 
 
+print("Graph tests:")
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphDB))
