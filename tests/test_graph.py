@@ -160,6 +160,12 @@ class TestGraphDB(unittest.TestCase):
         self.assertEqual(self.db.min_degree(), 1)
         self.assertEqual(self.db.max_degree(), 2)
 
+    def test_graph_aggregations_with_filtering(self):
+        self.db.add_relationship("A", "C", rel_type="KNOWS OF", since=2018)
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS"), 2)
+        self.assertEqual(self.db.count_relationships_by_type("KNOWS OF"), 1)
+        self.assertEqual(self.db.count_relationships_by_type("DOESNT KNOW"), 0)
+
     def test_graph_result_aggregates(self):
         res = self.db.find_nodes(label="Person", fields=["name", "age"])
         self.assertEqual(res.count(), 3)
