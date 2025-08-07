@@ -5,6 +5,7 @@
 **Coffy** is a lightweight, local-first embedded database engine supporting **NoSQL**, **SQL**, and **Graph** models — all in pure Python. Designed for fast prototyping, scripting, and local apps.
 
 [coffydb.org](https://coffydb.org/)
+
 ---
 
 ## Installation
@@ -63,3 +64,4 @@ Only pure-Python embedded document store with:
 ## License
 
 MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)
+
