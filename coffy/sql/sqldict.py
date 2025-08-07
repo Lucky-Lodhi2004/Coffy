@@ -20,8 +20,10 @@ class SQLDict(Sequence):
         """
         Initialize with a list of dictionaries or a single dictionary.
         data -- list or dict - The SQL query results.
+        columns -- List of column names derived from the SQL results, returns empty list if no rows are returned.
         """
         self._data = data if isinstance(data, list) else [data]
+        self.columns = list(self._data[0].keys()) if self._data else []
 
     def __getitem__(self, index):
         """
@@ -38,13 +40,20 @@ class SQLDict(Sequence):
         """
         return len(self._data)
 
+    def __columns__(self):
+        """
+        Get the list of column names.
+        Returns a list of column names.
+        """
+        return self.columns
+
     def __repr__(self):
         """
         String representation of the SQLDict.
         Returns a formatted string of the SQLDict.
         """
         if not self._data:
-            return "<empty result>"
+            return "<empty result>\n\n0 rows x 0 cols"
 
         # Get all column names
         columns = list(self._data[0].keys())
@@ -65,7 +74,15 @@ class SQLDict(Sequence):
             )
             rows.append(row_str)
 
-        return f"{header}\n{line}\n" + "\n".join(rows)
+        # Counts of rows and columns
+        col_count = len(self._data[0])
+        row_count = len(self._data)
+
+        return (
+            f"{header}\n{line}\n"
+            + "\n".join(rows)
+            + f"\n\n{row_count} rows x {col_count} cols"
+        )
 
     def as_list(self):
         """

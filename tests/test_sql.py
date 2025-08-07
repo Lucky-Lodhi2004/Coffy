@@ -56,6 +56,13 @@ class TestSQLModule(unittest.TestCase):
         result = query("SELECT * FROM users WHERE id = 1")
         output = str(result)
         self.assertIn("Neel", output)
+        self.assertIn("1 rows x 3 cols", output)
+
+    def test_repr_output_empty(self):
+        result = query("SELECT * FROM users WHERE id = 0")
+        output = str(result)
+        self.assertIn("<empty result>", output)
+        self.assertIn("0 rows x 0 cols", output)
 
     def test_export_json_and_csv(self):
         result = query("SELECT * FROM users")
@@ -67,6 +74,18 @@ class TestSQLModule(unittest.TestCase):
         self.assertTrue(os.path.exists(temp_csv))
         os.remove(temp_json)
         os.remove(temp_csv)
+
+    def test_column_property(self):
+        result = query("SELECT * FROM users WHERE id = 1")
+        self.assertEqual(result.columns, ["id", "name", "age"])
+
+    def test_column_property_empty(self):
+        result = query("SELECT * FROM users WHERE 1=0")
+        self.assertEqual(result.columns, [])
+
+    def test_column_property_out_of_order(self):
+        result = query("SELECT * FROM users ORDER BY age DESC")
+        self.assertNotEqual(result.columns, ["id", "age", "name"])
 
 
 unittest.TextTestRunner().run(

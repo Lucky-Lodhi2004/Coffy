@@ -1,12 +1,13 @@
-# ☕ Coffy: Local-First Embedded Database Engine for Python
+# Coffy: Local-First Embedded Database Engine for Python
 
 [![PyPI](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
 
 **Coffy** is a lightweight, local-first embedded database engine supporting **NoSQL**, **SQL**, and **Graph** models — all in pure Python. Designed for fast prototyping, scripting, and local apps.
 
+[coffydb.org](https://coffydb.org/)
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 pip install coffy
@@ -15,17 +16,17 @@ pip install coffy
 ---
 ![preview](https://github.com/nsarathy/Coffy/blob/main/assets/Coffy%20preview%20image.png)
 ---
-## 🚀 Features
+## Features
 
-- ✅ Local persistence (JSON, SQLite)
-- ✅ In-memory mode (`:memory:` or `None`)
-- ✅ No server needed
-- ✅ Logical and comparison operators
-- ✅ Unified query interface
+- Local persistence (JSON, SQLite)
+- In-memory mode (`:memory:` or `None`)
+- No server needed
+- Logical and comparison operators
+- Unified query interface
 
 ---
 
-## 🧠 Engines
+## Engines
 
 | Engine | Description | Docs |
 |--------|-------------|------|
@@ -53,14 +54,12 @@ Only pure-Python embedded document store with:
 
 ## 🔗 Links
 
+- [coffydb.org](https://coffydb.org/)
 - PyPI: [coffy](https://pypi.org/project/coffy/)
 - Source: [GitHub](https://github.com/nsarathy/Coffy)
-- Graph Documentation: [GRAPH_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
-- SQL Documentation: [SQL_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
-- NoSQL Documentation: [NOSQL_DOCS.md](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md)
 
 ---
 
-## ⚖️ License
+## License
 
 MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)
