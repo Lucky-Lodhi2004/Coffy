@@ -4,6 +4,7 @@
 
 **Coffy** is a lightweight, local-first embedded database engine supporting **NoSQL**, **SQL**, and **Graph** models — all in pure Python. Designed for fast prototyping, scripting, and local apps.
 
+[coffydb.org](https://coffydb.org/)
 ---
 
 ## Installation
@@ -29,9 +30,9 @@ pip install coffy
 
 | Engine | Description | Docs |
 |--------|-------------|------|
-| `coffy.graph` | Local graph database (NetworkX-based) | [Graph Docs](https://coffydb.org/graph) |
-| `coffy.nosql` | Document store with chainable queries | [NoSQL Docs](https://coffydb.org/nosql) |
-| `coffy.sql`   | Thin SQLite wrapper | [SQL Docs](https://coffydb.org/sql) |
+| `coffy.graph` | Local graph database (NetworkX-based) | [Graph Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md) |
+| `coffy.nosql` | Document store with chainable queries | [NoSQL Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/NOSQL_DOCS.md) |
+| `coffy.sql`   | Thin SQLite wrapper | [SQL Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/SQL_DOCS.md) |
 
 ---
 
@@ -53,11 +54,9 @@ Only pure-Python embedded document store with:
 
 ## 🔗 Links
 
+- [coffydb.org](https://coffydb.org/)
 - PyPI: [coffy](https://pypi.org/project/coffy/)
 - Source: [GitHub](https://github.com/nsarathy/Coffy)
-- Graph Documentation: [GRAPH_DOCS.md](https://coffydb.org/graph)
-- SQL Documentation: [SQL_DOCS.md](https://coffydb.org/sql)
-- NoSQL Documentation: [NOSQL_DOCS.md](https://coffydb.org/nosql)
 
 ---
 
