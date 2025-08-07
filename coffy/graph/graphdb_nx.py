@@ -597,6 +597,13 @@ class GraphDB:
         """
         return self.g.number_of_edges()
 
+    def count_relationships_by_type(self, type):
+        """
+        Count the number of relationships of a specific type.
+        type -- Type of the relationship to count.
+        """
+        return sum(1 for _, _, a in self.g.edges(data=True) if a.get("_type") == type)
+
     def avg_degree(self):
         """
         Calculate the average degree of the nodes.
