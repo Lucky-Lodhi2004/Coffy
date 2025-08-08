@@ -109,6 +109,17 @@ class GraphDB:
         self.g.remove_node(node_id)
         self._persist()
 
+    def remove_nodes_by_label(self, label):
+        """
+        Remove all nodes with a specific label.
+        label -- The label of the nodes to remove.
+        """
+        nodes_to_remove = [
+            n for n, a in self.g.nodes(data=True) if label in a.get("_labels", [])
+        ]
+        self.g.remove_nodes_from(nodes_to_remove)
+        self._persist()
+
     # Relationship (edge) operations
     def add_relationship(self, source, target, rel_type=None, **attrs):
         """
@@ -155,6 +166,17 @@ class GraphDB:
         target -- Unique identifier for the target node.
         """
         self.g.remove_edge(source, target)
+        self._persist()
+
+    def remove_relationships_by_type(self, type):
+        """
+        Remove all relationships of a specific type.
+        type -- Type of the relationship to remove.
+        """
+        edges_to_remove = [
+            (u, v) for u, v, a in self.g.edges(data=True) if a.get("_type") == type
+        ]
+        self.g.remove_edges_from(edges_to_remove)
         self._persist()
 
     # Basic queries
@@ -591,11 +613,27 @@ class GraphDB:
         """
         return self.g.number_of_nodes()
 
+    def count_nodes_by_label(self, label):
+        """
+        Count the number of nodes with a specific label.
+        label -- The label to count.
+        """
+        return sum(
+            1 for n, a in self.g.nodes(data=True) if label in a.get("_labels", [])
+        )
+
     def count_relationships(self):
         """
         Count the number of relationships (edges) in the graph.
         """
         return self.g.number_of_edges()
+
+    def count_relationships_by_type(self, type):
+        """
+        Count the number of relationships of a specific type.
+        type -- Type of the relationship to count.
+        """
+        return sum(1 for _, _, a in self.g.edges(data=True) if a.get("_type") == type)
 
     def avg_degree(self):
         """

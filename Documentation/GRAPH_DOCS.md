@@ -146,6 +146,13 @@ Remove a node.
 db.remove_node("U4")
 ```
 
+#### `remove_nodes_by_label(label)`
+Remove all nodes with a specific label.
+
+```python
+db.remove_nodes_by_label("Penguin")
+```
+
 #### `clear()`
 Clear the graph, removing all nodes and relationships.
 ```python
@@ -187,6 +194,13 @@ Remove an edge.
 db.remove_relationship("U2", "U1")
 ```
 
+#### `remove_relationships_by_type(type)`
+Remove all relationships of a specific type.
+
+```python
+db.remove_relationships_by_type("FRIEND_OF")
+```
+
 ---
 
 ### Introspection
@@ -217,12 +231,14 @@ db.has_relationship("U1", "U2")
 The following methods provide quick graph-wide statistics:
 
 ```python
-db.count_nodes()          # → total number of nodes
-db.count_relationships()  # → total number of relationships (edges)
-db.avg_degree()           # → average node degree
-db.min_degree()           # → minimum node degree
-db.max_degree()           # → maximum node degree
-db.total_degree()         # → sum of all node degrees
+db.count_nodes()                      # → total number of nodes
+db.count_nodes_by_label(label)        # → count of nodes with specific label
+db.count_relationships()              # → total number of relationships (edges)
+db.count_relationships_by_type(type)  # → count of specific relationship type
+db.avg_degree()                        # → average node degree
+db.min_degree()                        # → minimum node degree
+db.max_degree()                        # → maximum node degree
+db.total_degree()                      # → sum of all node degrees
 
 # Directed graphs only:
 db.total_in_degree()      # → sum of in-degrees across all nodes

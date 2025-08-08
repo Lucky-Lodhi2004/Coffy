@@ -1,6 +1,7 @@
 # Coffy: Local-First Embedded Database Engine for Python
 
 [![PyPI](https://img.shields.io/pypi/v/coffy)](https://pypi.org/project/coffy/)
+![PyPI Downloads](https://static.pepy.tech/badge/coffy)
 
 **Coffy** is a lightweight, local-first embedded database engine supporting **NoSQL**, **SQL**, and **Graph** models — all in pure Python. Designed for fast prototyping, scripting, and local apps.
 

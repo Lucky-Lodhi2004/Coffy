@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="coffy",
-    version="0.2.1",
+    version="0.2.2",
     author="nsarathy",
     description="Lightweight local NoSQL, SQL, and Graph embedded database engine",
     long_description=open("README.md", encoding="utf-8").read(),
@@ -14,6 +14,14 @@ setup(
     ],
     python_requires=">=3.7",
     include_package_data=True,
+    license="MIT",
+    license_files=["LICENSE"],
+    urls={
+        "Website": "https://coffydb.org",
+        "Source": "https://github.com/nsarathy/coffy",
+        "Bug Reports & Feature Requests": "https://github.com/nsarathy/coffy/issues",
+        "Discussions": "https://github.com/nsarathy/coffy/discussions",
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
