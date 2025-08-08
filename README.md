@@ -30,6 +30,9 @@ pip install coffy
 
 ## Engines
 
+If you are viewing this from `coffydb.org`, you can find the documentation for each engine in the `NoSQL`, `Graph`, and `SQL` sections.
+
+
 | Engine | Description | Docs |
 |--------|-------------|------|
 | `coffy.graph` | Local graph database (NetworkX-based) | [Graph Docs](https://github.com/nsarathy/Coffy/blob/main/Documentation/GRAPH_DOCS.md) |
@@ -65,4 +68,8 @@ Only pure-Python embedded document store with:
 ## License
 
 MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)
+
+---
+
+Disclaimer: Number of downloads includes mirrors.
 

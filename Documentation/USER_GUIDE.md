@@ -48,12 +48,21 @@ junior = users.where("age").lt(25).run()
 ### 2.3 SQL
 
 ```python
-from coffy.sql import init, query
+from coffy.sql import init, query, Model, Integer
 
-init(":memory:")                              # default = in‑memory
+init(":memory:")                              # default = in-memory
+
+# Raw SQL
 query("CREATE TABLE nums (n INT)")
 query("INSERT INTO nums VALUES (42)")
-result = query("SELECT * FROM nums")
+
+# ORM (optional)
+class User(Model):
+    id = Integer(primary_key=True)
+    name = Text()
+User.objects.create_table()
+User.objects.insert(id=1, name="Neel")
+print(User.objects.get(id=1))
 ```
 
 ---
@@ -73,7 +82,8 @@ result = query("SELECT * FROM nums")
 1. **Model locally.** Start in `:memory:` for speed.  
 2. **Persist when it matters.** Flip to file‑backed once your schema stabilises.  
 3. **Query fluently.** Chain filters (`where().eq().gt()`) or pattern‑match (`match_path_structured`) without mental context‑switching between engines.  
-4. **Export everywhere.** Any result → `.to_json()`, `.to_csv()`, or `save_query_result()`.
+4. **Pick your style.** Use raw SQL for quick one-offs or the built-in ORM for clean, chainable Python queries.
+5. **Export everywhere.** Any result → `.to_json()`, `.to_csv()`, or `save_query_result()`.
 
 ---
 
@@ -106,6 +116,16 @@ enriched = (users.lookup("orders",
 big = query("SELECT * FROM logs WHERE ts >= '2025‑01‑01'")
 big.to_csv("logs_2025.csv")
 ```
+```
+from coffy.sql import Model, Integer, Text
+class Log(Model):
+    id = Integer(primary_key=True)
+    ts = Text()
+    msg = Text()
+
+recent = Log.objects.query().where(("ts", ">=", "2025-01-01")).all()
+recent.to_csv("logs_2025.csv")
+```
 
 ### 5.4 Mixing Engines (Example)
 
@@ -126,14 +146,15 @@ print(ppl_col.avg("age"))
 * **Fluent APIs.** Chainable queries, declarative traversals, instant visualisation.
 * **Local‑first philosophy.** Perfect for CLIs, notebooks, desktop apps, and edge devices.
 * **JSON‑Readable Storage.** Debug or hand‑edit your data with any text editor.
+* **Built-in ORM.** Define models in pure Python, bulk-insert, filter, join, group, and aggregate without leaving your editor.
 
 ---
 
 ## 7. Limitations (Know Before You Go)
 
 * Single‑process only — no concurrent writers.
-* Not ACID; prefer snapshot saves over long transactions.
-* No explicit indexing beyond in‑memory structures; keep datasets small (<~1e6 rows/nodes) or move to a server‑grade DB.
+* Not ACID (nosql and graph); prefer snapshot saves over long transactions.
+* No explicit indexing beyond in‑memory structures (graph).
 ---
 
-MIT license © 2025 Neel Sarathy • Happy hacking!
+MIT license © 2025 Neel Sarathy
