@@ -13,6 +13,19 @@ _connection = None
 _cursor = None
 
 
+def get_connection() -> "sqlite3.Connection":
+    """
+    Return the active sqlite3 connection initialized by coffy.sql.init(...).
+    Raises RuntimeError if not initialized.
+    """
+    global conn
+    if _connection is None:
+        raise RuntimeError(
+            "Coffy SQL engine is not initialized. Call coffy.sql.init(...) first."
+        )
+    return _connection
+
+
 def initialize(db_path=None):
     """
     Initialize the SQL engine with the given database path.

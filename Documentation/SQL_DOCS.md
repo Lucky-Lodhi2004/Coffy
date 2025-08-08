@@ -4,6 +4,7 @@ A tiny, zero‑dependency wrapper around `sqlite3` that gives you:
 * one‑liner database **initialise/query/close** calls  
 * a **`SQLDict`** result object with pretty `print`, HTML viewing, and CSV / JSON export  
 * sensible defaults (in‑memory DB if you don’t specify a path)
+* a minimal **ORM** with declarative models, query building, bulk insert, and SQL injection protections
 
 ---
 
@@ -20,6 +21,17 @@ A tiny, zero‑dependency wrapper around `sqlite3` that gives you:
     - [`to_json(path)`](#to_jsonpath)
     - [`view(title: str = "SQL Query Results")`](#viewtitle-str---sql-query-results-)
 - [Usage Examples](#usage-examples)
+- [ORM Documentation](#coffy-sql-orm-documentation)
+    - [Overview](#overview)
+    - [Key Components](#key-components)
+        - [Fields](#fields)
+        - [Model](#model)
+        - [Manager](#manager)
+        - [Query Builder](#query-builder)
+        - [Raw Queries](#raw-queries)
+    - [Protections Against SQL Injection](#protections-against-sql-injection)
+    - [Example End-to-End](#example-end-to-end)
+    - [Summary](#summary)
 
 ---
 
@@ -117,3 +129,181 @@ query("INSERT INTO users (name, age, occupation, city) VALUES ('Charlie', 35, 'E
 print(query("SELECT * FROM users"))
 close()
 ```
+
+---
+
+## `coffy.sql` ORM Documentation
+
+### Overview
+
+Coffy’s SQL ORM is a lightweight object-relational mapper built on top of SQLite.  
+It offers a clean, Pythonic interface for defining models, creating tables, performing CRUD operations, building queries, and running raw SQL.
+
+The ORM is minimal but expressive, with built-in protections against SQL injection via identifier validation and value parameterization.
+
+---
+
+### Key Components
+
+#### Fields
+
+Field classes define table columns and constraints.  
+They are declared as class attributes inside `Model` subclasses.
+
+Available field types:
+- `Integer`
+- `Real`
+- `Text`
+- `Blob`
+
+Each accepts optional arguments:
+- `primary_key` (bool)
+- `nullable` (bool)
+- `default` (any)
+
+Example:
+```python
+class User(Model):
+    id = Integer(primary_key=True, nullable=False)
+    name = Text(nullable=False)
+    age = Integer(default=18)
+```
+
+---
+
+#### Model
+
+A `Model` represents a database table.  
+Its metaclass (`ModelMeta`) automatically collects `Field` definitions and metadata.
+
+Special attributes:
+- `__tablename__` (optional) – override the table name
+- `objects` – a `Manager` instance for CRUD and queries
+
+Example:
+```python
+class Product(Model):
+    __tablename__ = "products"
+    id = Integer(primary_key=True, nullable=False)
+    name = Text(nullable=False, default="unknown")
+    price = Real(nullable=False)
+```
+
+---
+
+#### Manager
+
+`Manager` provides table-level operations:
+
+- `create_table(if_not_exists=True)` – create table with fields
+- `drop_table(if_exists=True)` – drop table
+- `insert(**values)` – insert one row
+- `bulk_insert(rows)` – insert many rows, respecting defaults for omitted fields
+- `update(where, **values)` – update matching rows
+- `delete(where)` – delete matching rows
+- `get(**eq_filters)` – retrieve a single row by equality filters
+- `query()` – create a `Query` object
+
+Example:
+```python
+User.objects.insert(id=1, name="Alice")
+User.objects.update([("id", "=", 1)], name="Alicia")
+User.objects.delete([("id", "=", 1)])
+```
+
+---
+
+#### Query Builder
+
+The `Query` class allows constructing SELECT queries fluently.
+
+Methods:
+- `select(*cols)` – columns to retrieve
+- `where(cond)` – WHERE conditions (supports nested AND/OR)
+- `order_by(*cols)` – ORDER BY clause
+- `limit(n, offset=None)` – LIMIT/OFFSET
+- `join(other_table, on, kind="INNER")` – JOINs with validation
+- `group_by(*cols)` – GROUP BY
+- `having(cond)` – HAVING
+- `with_cte(name, sql, params=None, recursive=False)` – Common Table Expressions
+- `all()` – execute and return results as `SQLDict`
+- `first()` – return first result or `None`
+- `aggregate(**agg)` – shortcut for aggregates
+
+Condition format:
+```python
+[("age", ">", 21), ("city", "IS NOT", None)]
+(("name", "=", "Alice"), "OR", ("name", "=", "Bob"))
+```
+
+Example:
+```python
+q = User.objects.query()     .select("id", "name")     .where([("age", ">", 21), ("city", "IS NOT", None)])     .order_by("id ASC")     .limit(5)
+
+rows = q.all().as_list()
+```
+
+---
+
+#### Raw Queries
+
+For advanced use cases, execute raw SQL:
+```python
+from coffy.sql import raw
+res = raw("SELECT COUNT(*) AS c FROM users WHERE age > ?", [25])
+print(res[0]["c"])
+```
+
+`raw()` returns an `SQLDict`, which supports:
+- index access (`res[0]`)
+- iteration
+- `.as_list()` – list of dicts
+
+---
+
+### Protections Against SQL Injection
+
+- **Identifier validation** – `_quote_ident()` ensures identifiers contain only alphanumerics and underscores, optionally qualified with a dot (`table.column`).
+- **Parameterized queries** – all values are bound via `?` placeholders.
+- **Join ON validation** – token parsing ensures join conditions do not contain unsafe syntax.
+
+---
+
+### Example End-to-End
+
+```python
+from coffy.sql import init, close, Model, Integer, Text, raw
+
+init(":memory:")
+
+class User(Model):
+    id = Integer(primary_key=True, nullable=False)
+    name = Text(nullable=False)
+    age = Integer()
+
+User.objects.create_table()
+User.objects.bulk_insert([
+    {"id": 1, "name": "Alice", "age": 30},
+    {"id": 2, "name": "Bob", "age": 25}
+])
+
+res = User.objects.query()     .select("name")     .where(("age", ">", 26))     .all()
+
+print(res.as_list())  # [{'name': 'Alice'}]
+
+close()
+```
+
+---
+
+### Summary
+
+Coffy SQL ORM is a lightweight, explicit, and secure ORM for SQLite.  
+It offers:
+- Declarative model definitions
+- Clean query building
+- Bulk insert with defaults
+- Aggregations and grouping
+- Safe raw SQL execution
+
+This makes it ideal for small to medium-sized projects, educational purposes, and embedded database applications.
