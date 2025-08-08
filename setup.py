@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="coffy",
-    version="0.2.1",
+    version="0.2.2",
     author="nsarathy",
     description="Lightweight local NoSQL, SQL, and Graph embedded database engine",
     long_description=open("README.md", encoding="utf-8").read(),
