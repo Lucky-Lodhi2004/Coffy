@@ -150,7 +150,66 @@ print(ppl_col.avg("age"))
 
 ---
 
-## 7. Limitations (Know Before You Go)
+## 7. Feature Matrix
+
+| Feature | coffy.graph | coffy.nosql | coffy.sql |
+|---|---|---|---|
+| File-backed persistence | ✅ JSON | ✅ JSON | ✅ SQLite |
+| In-memory mode | ✅ | ✅ | ✅ |
+| Atomic writes on save | ✅ | ✅ | ❌ (SQLite handles durability) |
+| Auto create dirs, auto load | ✅ | ✅ | ✅ (SQLite creates file) |
+| Path validation | ✅ .json required | ✅ .json required | ✅ any .db or path |
+| ACID guarantees | ❌ | ❌ | ✅ (SQLite) |
+| Schema enforcement | ❌ | ❌ | ✅ (ORM) |
+| Flexible schema | ✅ nodes, rels | ✅ documents | ⚠️ via nullable columns |
+| Result wrapper | ✅ GraphResult | ✅ DocList | ✅ SQLDict |
+| Pretty `__repr__` | ❌ | ✅ | ✅ |
+| Export query to JSON | ✅ | ✅ | ✅ |
+| HTML viewer | ✅ PyVis, tooltips | ✅ Card grid | ✅ Table view |
+| Strict add duplicate guard | ✅ `add_node` raises | ❌ | ❌ |
+| Remove by label or type | ✅ nodes, rels | ✅ `remove_field` only | ❌ (use WHERE) |
+| Projection | ✅ node, rel | ✅ `run(fields=...)` | ✅ `select(...)` |
+| Pagination | ✅ limit, offset | ✅ limit, offset | ✅ limit, offset |
+| Logical filters | ✅ and, or, not | ✅ AND, OR, NOT | ✅ WHERE, HAVING |
+| Comparisons | ✅ gt, gte, lt, lte, eq, ne | ✅ eq, ne, gt, gte, lt, lte, between | ✅ all SQL ops |
+| Regex match | ❌ | ✅ `matches()` | ✅ `LIKE` or `REGEXP` (pragma) |
+| Field existence | ❌ | ✅ `exists()` | ✅ `IS NULL` checks |
+| Nested field access | ❌ | ✅ dotted paths | ❌ |
+| Indexing | ❌ | ✅ equality and `in_` | ✅ SQLite indexes (user defined) |
+| Aggregations (collection/graph) | ✅ degree stats, counts | ✅ sum, avg, min, max, count | ✅ SQL aggregates |
+| Aggregations on filtered result | ✅ GraphResult methods | ✅ QueryBuilder methods | ✅ `.aggregate()` or SQL |
+| Distinct values | ❌ | ✅ coerces to str | ✅ `SELECT DISTINCT` |
+| Bulk insert/add | ✅ nodes, rels | ✅ `add_many` | ✅ `bulk_insert` |
+| Update | ✅ node, rel | ✅ `update({...})` | ✅ `UPDATE` via Manager |
+| Replace | ❌ | ✅ `replace(new_doc)` | ✅ `REPLACE` or upsert pattern |
+| Upsert | ✅ `set_node` | ❌ | ⚠️ use `INSERT OR REPLACE` manually |
+| Delete | ✅ node, rel | ✅ `delete()` | ✅ `DELETE` via Manager |
+| Joins | ⚠️ via traversal | ✅ `lookup` one-to-one, many | ✅ `JOIN` in Query |
+| Join types | N/A | N/A | ⚠️ INNER, LEFT ok, RIGHT/FULL not in SQLite |
+| Cross-collection enrich | ❌ | ✅ `lookup(..., many=\|False)` | ✅ JOINs or CTEs |
+| Query builder | ❌ | ✅ chainable | ✅ fluent `Query` API |
+| Raw queries | ❌ | ❌ | ✅ `raw(sql, params)` |
+| CTEs | ❌ | ❌ | ✅ `.with_cte(..., recursive=...)` |
+| Identifier validation | ❌ | ❌ | ✅ `_quote_ident` guards names |
+| Param binding | ❌ | ❌ | ✅ `?` parameters everywhere |
+| Default values in DDL | ❌ | ❌ | ✅ safely inlined via `quote(?)` |
+| Error surface | Exceptions | Exceptions | ⚠️ `engine.query` returns error dicts |
+| Directed graphs | ✅ flag | N/A | N/A |
+| Path matching, traversal | ✅ node, full, structured | ❌ | ⚠️ emulate via JOINs/CTEs |
+| Cycle avoidance in match | ✅ | N/A | N/A |
+| Degree metrics | ✅ avg, min, max, totals | ❌ | ❌ |
+| Count by label/type | ✅ | ❌ | ✅ via SQL WHERE |
+| Save whole dataset | ✅ `save()` | ✅ `save()` | ❌ (dump via SQL) |
+| Import/export dataset | ✅ JSON | ✅ JSON | ⚠️ CSV/JSON export of results only |
+
+## Legend
+- ✅ fully supported
+- ⚠️ partially supported or has caveats
+- ❌ not supported
+
+---
+
+## 8. Limitations (Know Before You Go)
 
 * Single‑process only — no concurrent writers.
 * Not ACID (nosql and graph); prefer snapshot saves over long transactions.
