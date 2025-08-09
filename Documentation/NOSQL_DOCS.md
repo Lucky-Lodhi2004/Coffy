@@ -4,7 +4,7 @@
 - Supports nested fields, logical filters, aggregations, projections, and joins
 - Built for local usage with optional persistence; minimal setup, fast iteration
 
-> Scope: local, single-process, small datasets. No indexes, no transactions. Designed for clarity and fast iteration.
+> Scope: local, single-process, small datasets. Designed for clarity and fast iteration.
 
 ---
 ## Table of Contents
