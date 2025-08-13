@@ -44,6 +44,15 @@ class TestCollectionManager(unittest.TestCase):
     def test_between(self):
         q = self.col.where("age").between(25, 35)
         self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(30, 25)
+        self.assertEqual(q.count(), 2)
+        self.assertEqual(q.first()["name"], "Alice")
+
+        q = self.col.where("age").between(27, 35)
+        self.assertEqual(q.count(), 1)
+        self.assertEqual(q.first()["name"], "Alice")
 
     def test_exists(self):
         q = self.col.where("nested").exists()
@@ -112,10 +121,10 @@ class TestCollectionManager(unittest.TestCase):
         q = self.col.where("name").eq("Alice")
         merged = q.merge(lambda d: {"new": d["age"] + 10}).run()
         self.assertEqual(merged[0]["new"], 40)
-    
+
     def test_sort_ascending(self):
         """Test sorting in ascending order."""
-        sorter_db = db("sorter_asc", path=":memory")
+        sorter_db = db("sorter_asc", path=":memory:")
         sorter_db.add_many([
             {"name": "Carol", "age": 40},
             {"name": "Alice", "age": 30},
@@ -127,7 +136,7 @@ class TestCollectionManager(unittest.TestCase):
     
     def test_sort_descending(self):
         """Test sorting in descending order."""
-        sorter_db = db("sorter_desc", path=":memory")
+        sorter_db = db("sorter_desc", path=":memory:")
         sorter_db.add_many([
             {"name": "Carol", "age": 40},
             {"name": "Alice", "age": 30},
@@ -139,17 +148,16 @@ class TestCollectionManager(unittest.TestCase):
     
     def test_sort_with_missing_and_mixed_fields(self):
         """Test that documents with missing and mixed sort keys are at the end."""
-        sorter_db = db("sorter_mixed", path=":memory")
+        sorter_db = db("sorter_mixed", path=":memory:")
         sorter_db.add_many([
             {"name": "David", "tags": ["z"]},
             {"name": "Carol", "age": 40},
             {"name": "Kevin", "age": "twenty"},
             {"name": "Bob", "age": 25},
         ])
-
         result = sorter_db.where("name").exists().sort("age").run().as_list()
         names = [doc["name"] for doc in result]
-        self.assertEqual(name, ["Bob", "Carol", "Kevin", "David"])
+        self.assertEqual(names, ["Bob", "Carol", "Kevin", "David"])
     
     def test_sort_on_nested_field(self):
         """Test sorting on a nested field."""
@@ -165,7 +173,7 @@ class TestCollectionManager(unittest.TestCase):
 
     def test_sort_stability(self):
         """Test that the sort is stable."""
-        sorter_db = db("sorter_stable", path=":memory")
+        sorter_db = db("sorter_stable", path=":memory:")
         sorter_db.add_many([
             {"name": "Alice", "age": 30, "order": 1},
             {"name": "Adam", "age": 30, "order": 2},

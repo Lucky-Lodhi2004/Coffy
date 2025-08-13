@@ -213,18 +213,16 @@ class QueryBuilder:
         return self._add_filter(
             lambda d: QueryBuilder._get_nested(d, self.current_field) is not None
         )
-
+    
     def sort(self, key: str, reverse: bool = False):
         """
         Specifies the sorting order for the query results.
         Args:
-            key (str): The document key to sort by.
+            key (str): The document key to sort by. Can be a nested field.
             reverse (bool): If True, sorts in descending order. Defaults to False.
-
         Returns:
             QueryBuilder: The QueryBuilder instance for chaining.
         """
-
         self._sort_key = key
         self._sort_reverse = reverse
         return self
@@ -290,6 +288,21 @@ class QueryBuilder:
         Returns a DocList containing the matching documents.
         """
         results = [doc for doc in self.documents if all(f(doc) for f in self.filters)]
+
+        if self._sort_key:
+            def sort_key_func(doc):
+                val = self._get_nested(doc, self._sort_key)
+                if val is None:
+                    return (3, None)
+                elif isinstance(val, (int, float)):
+                    return (0, val)
+                elif isinstance(val, str):
+                    return (1, val)
+                else:
+                    return (2, str(val))
+            
+            results.sort(key=sort_key_func, reverse=self._sort_reverse)
+            
         if self._offset:
             results = results[self._offset :]
         if self._limit is not None:
@@ -307,15 +320,9 @@ class QueryBuilder:
                     value = QueryBuilder._get_nested(doc, f)
                     proj[f] = value
                 projected.append(proj)
-            return DocList(
-                projected, sort_key=self._sort_key, sort_reverse=self._sort_reverse
-            )
+            return DocList(projected)
 
-        return DocList(
-            results,
-            sort_key=self._sort_key,
-            sort_reverse=self._sort_reverse,
-        )
+        return DocList(results)
 
     def update(self, changes):
         """
