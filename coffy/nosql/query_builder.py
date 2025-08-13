@@ -25,8 +25,6 @@ class QueryBuilder:
         self._lookup_results = None
         self._limit = None
         self._offset = None
-        self._sort_key = None
-        self._sort_reverse = False
 
         self.collection_name = collection_name
         self.index_manager = None
@@ -214,21 +212,6 @@ class QueryBuilder:
             lambda d: QueryBuilder._get_nested(d, self.current_field) is not None
         )
 
-    def sort(self, key: str, reverse: bool = False):
-        """
-        Specifies the sorting order for the query results.
-        Args:
-            key (str): The document key to sort by.
-            reverse (bool): If True, sorts in descending order. Defaults to False.
-
-        Returns:
-            QueryBuilder: The QueryBuilder instance for chaining.
-        """
-
-        self._sort_key = key
-        self._sort_reverse = reverse
-        return self
-
     # Logic grouping
     def _and(self, *fns):
         """
@@ -307,15 +290,9 @@ class QueryBuilder:
                     value = QueryBuilder._get_nested(doc, f)
                     proj[f] = value
                 projected.append(proj)
-            return DocList(
-                projected, sort_key=self._sort_key, sort_reverse=self._sort_reverse
-            )
+            return DocList(projected)
 
-        return DocList(
-            results,
-            sort_key=self._sort_key,
-            sort_reverse=self._sort_reverse,
-        )
+        return DocList(results)
 
     def update(self, changes):
         """
