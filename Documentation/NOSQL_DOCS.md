@@ -7,33 +7,36 @@
 > Scope: local, single-process, small datasets. Designed for clarity and fast iteration.
 
 ---
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)
 - [Data Model & Persistence](#data-model--persistence)
 - [Start Here](#start-here)
 - [CollectionManager](#collectionmanager)
-    - [Constructor](#constructor)
-    - [Insertion](#insertion)
-    - [Query entrypoints](#query-entrypoints)
-    - [Aggregations (collection-level helpers)](#aggregations-collection-level-helpers)
-    - [Maintenance & IO](#maintenance--io)
-    - [Visualization](#visualization)
+  - [Constructor](#constructor)
+  - [Insertion](#insertion)
+  - [Query entrypoints](#query-entrypoints)
+  - [Aggregations (collection-level helpers)](#aggregations-collection-level-helpers)
+  - [Maintenance & IO](#maintenance--io)
+  - [Visualization](#visualization)
 - [QueryBuilder](#querybuilder)
-    - [Field selection](#field-selection)
-    - [Comparison operators](#comparison-operators)
-    - [Logic grouping](#logic-grouping)
-    - [Execution](#execution)
-    - [Mutation](#mutation)
-    - [Aggregations (query-scoped)](#aggregations-query-scoped)
-    - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
-    - [Pagination](#pagination)
+  - [Field selection](#field-selection)
+  - [Comparison operators](#comparison-operators)
+  - [Logic grouping](#logic-grouping)
+  - [Execution](#execution)
+  - [Mutation](#mutation)
+  - [Aggregations (query-scoped)](#aggregations-query-scoped)
+  - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
+  - [Pagination](#pagination)
+  - [Sorting](#sorting)
 - [DocList](#doclist)
 - [Error Handling](#error-handling)
 - [Performance & Limits](#performance--limits)
 - [Example: end-to-end](#example-end-to-end)
 
 ---
+
 ## Quick Start
 
 ```python
@@ -52,6 +55,11 @@ users.add_many([
 q = users.where("name").eq("Neel")
 print(q.first())
 # -> {'id': 1, 'name': 'Neel', ...}
+
+# Sort by age in descending order
+oldest_first = users.where("age").exists().sort("age", reverse=True).run()
+print(oldest_first.as_list())
+# -> [{'id': 3, ...}, {'id': 1, ...}, {'id': 2, ...}]
 
 # Nested field access
 q = users.where("address.city").eq("Austin")
@@ -76,8 +84,8 @@ Example on disk:
 
 ```json
 [
-  {"id": 1, "name": "Neel", "age": 30},
-  {"id": 2, "name": "Bea", "age": 25}
+  { "id": 1, "name": "Neel", "age": 30 },
+  { "id": 2, "name": "Bea", "age": 25 }
 ]
 ```
 
@@ -88,13 +96,13 @@ Example on disk:
 ### CollectionManager
 
 #### Constructor
+
 ```python
 CollectionManager(name: str, path: str | None = None)
 ```
 
 - name -- the collection name
 - path -- optional path to a JSON file for persistence; if `None` or `:memory:`, in-memory only
-
 
 #### Insertion
 
@@ -104,6 +112,7 @@ add_many(docs: list[dict]) -> {"inserted": N}
 ```
 
 **Examples**
+
 ```python
 users.add({"id": 4, "name": "Drew"})
 users.add_many([{"id": 5}, {"id": 6, "active": True}])
@@ -119,6 +128,7 @@ not_any(*builders)  -> QueryBuilder    # NOT( OR(sub-queries) )
 ```
 
 **Examples**
+
 ```python
 # where + eq
 users.where("name").eq("Neel").first()
@@ -154,6 +164,7 @@ first() -> dict | None              # first document in the collection
 ```
 
 **Examples**
+
 ```python
 users.sum("age")      # 95
 users.avg("age")      # 31.66...
@@ -175,6 +186,7 @@ all_docs() -> list[dict]    # alias for all()
 ```
 
 **Examples**
+
 ```python
 users.export("backup/users_export.json")
 users.clear()
@@ -186,11 +198,13 @@ users.import_("backup/users_export.json")
 #### Visualization
 
 You can visualize your collections using the built-in view function.
+
 ```python
 view() -> None
 ```
 
 **Example**
+
 ```python
 users.view()
 ```
@@ -212,6 +226,7 @@ where(field: str) -> QueryBuilder
 Supports **dot-notation** for nested fields.
 
 **Examples**
+
 ```python
 users.where("name").eq("Neel")
 users.where("address.city").eq("Indy")
@@ -235,6 +250,7 @@ exists()            # field exists (not null or missing)
 ```
 
 **Examples**
+
 ```python
 # equality
 users.where("name").eq("Neel").count()
@@ -253,6 +269,7 @@ users.where("address.city").exists().run()
 ```
 
 #### Logic grouping
+
 These are not suggested to be used directly, but are available through the collection helpers, `match_any`, `match_all`, and `not_any`.
 
 ```python
@@ -262,6 +279,7 @@ _not(*builders)   # negates the AND of each sub-query
 ```
 
 **Examples**
+
 ```python
 # _and
 q = users.where("age").gte(25)
@@ -298,6 +316,7 @@ distinct(field: str) -> list[...]               # returns unique values for a fi
 `run(fields=[...])` performs **projection**. Fields can be nested (`"a.b.c"`). Returned keys are the field names you requested.
 
 **Examples**
+
 ```python
 users.where("age").gte(25).run(fields=["id", "name"]).as_list()
 # -> [{'id': 1, 'name': 'Neel'}, {'id': 2, 'name': 'Bea'}, ...]
@@ -319,6 +338,7 @@ remove_field(field: str) -> {"removed": N}  # removes a field from matching docu
 ```
 
 **Examples**
+
 ```python
 # mark all under 30 as junior
 users.where("age").lt(30).update({"rank": "junior"})
@@ -336,6 +356,7 @@ users.where("name").eq("Neel").remove_field("rank")
 #### Aggregations (query-scoped)
 
 These work **after** filtering:
+
 ```python
 sum(field)      # sum of numeric field values
 avg(field)      # average of numeric field values
@@ -344,6 +365,7 @@ max(field)      # maximum value of numeric field
 ```
 
 **Examples**
+
 ```python
 # average age for people with an email at a.com
 users.where("email").matches("@a\\.com$").avg("age")
@@ -352,13 +374,13 @@ users.where("email").matches("@a\\.com$").avg("age")
 #### Lookup and Merge
 
 ```python
-lookup(foreign_collection_name, local_key, foreign_key, as_field, many=True) -> QueryBuilder  
+lookup(foreign_collection_name, local_key, foreign_key, as_field, many=True) -> QueryBuilder
 merge(fn: callable) -> QueryBuilder
 ```
 
 - `lookup` runs the current query, matches each result to documents in another collection by key equality, and attaches the matched result(s) at `as_field`.
-    - If `many=False`, attaches a single document or `None` (one-to-one).
-    - If `many=True`, attaches a list of matching documents (one-to-many).
+  - If `many=False`, attaches a single document or `None` (one-to-one).
+  - If `many=True`, attaches a list of matching documents (one-to-many).
 - `merge` transforms each (possibly looked-up) document by merging in fields returned from `fn(doc)`.
 
 **Example - One-to-one join**
@@ -423,6 +445,7 @@ out = (
 > Note: `lookup` defaults to one-to-many (`many=True`). Use `many=False` for one-to-one joins.
 
 ---
+
 #### Pagination
 
 You can paginate query results using `.limit(n)` and `.offset(m)`:
@@ -433,9 +456,35 @@ offset(m: int) -> QueryBuilder # Skips the first m results.
 ```
 
 **Examples**
+
 ```python
 col.where("score").gte(50).offset(10).limit(5).run()
 # Returns 5 documents starting from the 11th result (zero-indexed).
+```
+
+### Sorting
+
+You can sort query results using `.sort(key, reverse=False)`:
+
+```python
+sort(key: str, reverse: bool = False) -> QueryBuilder
+```
+
+- `key(str)`: The field to sort by. Can be a nested field using dot-notation (e.g., "address.zip")
+- `reverse(bool)`: If True, sorts in descending order. Defaults to False (ascending).
+  Documents that are missing the sort key will always be placed at the end of the results
+
+**Examples**
+
+```python
+# Sort users by age, youngest first
+users.where("age").exists().sort("age").run()
+
+# Sort users by age, oldest first
+users.where("age").exists().sort("age", reverse=True).run()
+
+# Sort by a nested field
+users.where("address.city").exists().sort("address.city").run()
 ```
 
 ### DocList
@@ -452,6 +501,7 @@ repr(doclist)   # pretty table-like output
 ```
 
 **Examples**
+
 ```python
 res = users.where("age").gte(25).run(fields=["id", "name"])
 print(len(res))             # -> 3
