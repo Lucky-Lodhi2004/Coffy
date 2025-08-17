@@ -28,6 +28,7 @@
     - [Aggregations (query-scoped)](#aggregations-query-scoped)
     - [Lookup (one-to-one join) and Merge](#lookup-one-to-one-join-and-merge)
     - [Pagination](#pagination)
+    - [Sorting](#sorting)
 - [DocList](#doclist)
 - [Error Handling](#error-handling)
 - [Performance & Limits](#performance--limits)
@@ -437,6 +438,25 @@ offset(m: int) -> QueryBuilder # Skips the first m results.
 col.where("score").gte(50).offset(10).limit(5).run()
 # Returns 5 documents starting from the 11th result (zero-indexed).
 ```
+
+---
+
+#### Sorting
+
+You can sort query results using `.sort(field, reverse=False) -> QueryBuilder`:
+
+- `field`: The field to sort by.
+- `reverse`: If `True`, sorts in descending order.
+
+**Examples**
+```python
+col.where("score").gte(50).sort("score", reverse=True).run()
+# Returns documents with score >= 50, sorted by score descending.
+col.where("age").lt(40).sort("age").run()
+# Returns documents with age < 40, sorted by age ascending.
+```
+
+---
 
 ### DocList
 
