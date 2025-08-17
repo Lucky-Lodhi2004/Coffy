@@ -524,6 +524,8 @@ users.where("name").eq("Carl").delete()
 print(users.sum("age"), users.avg("age"))
 ```
 
+---
+
 
 # NoSQL CLI
 

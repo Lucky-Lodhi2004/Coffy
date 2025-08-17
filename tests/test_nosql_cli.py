@@ -1,3 +1,6 @@
+# tests/test_nosql_cli.py
+# author: nsarathy
+
 import io
 import os
 import re

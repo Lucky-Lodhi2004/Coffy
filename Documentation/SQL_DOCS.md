@@ -308,6 +308,8 @@ It offers:
 
 This makes it ideal for small to medium-sized projects, educational purposes, and embedded database applications.
 
+---
+
 
 # SQL CLI
 

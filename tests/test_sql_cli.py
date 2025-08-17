@@ -1,3 +1,6 @@
+# tests/test_sql_cli.py
+# author: nsarathy
+
 import io
 import os
 import csv

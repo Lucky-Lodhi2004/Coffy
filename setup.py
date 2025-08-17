@@ -30,7 +30,8 @@ setup(
     entry_points={
         "console_scripts": [
             "coffy-sql=coffy.cli.sql_cli:main",
-            "coffy-nosql=coffy.cli.nosql_cli:main"
+            "coffy-nosql=coffy.cli.nosql_cli:main",
+            "coffy-graph=coffy.cli.graph_cli:main",
         ],
     },
 )

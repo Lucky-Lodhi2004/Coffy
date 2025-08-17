@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# coffy/cli/sql_cli.py
+# author: nsarathy
+
 import argparse
 import json
 import os
