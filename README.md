@@ -25,6 +25,7 @@ pip install coffy
 - No server needed
 - Logical and comparison operators
 - Unified query interface
+- Command Line Interface (CLI)
 
 ---
 
@@ -47,6 +48,7 @@ Only embedded Python graph DB with:
 - ✅ Declarative traversal syntax (match_node_path(...))
 - ✅ Label/type filtering, limit/offset, result projection
 - ✅ Unified API for both nodes and relationships
+- ✅ Robust CLI
 
 Only pure-Python embedded document store with:
 
@@ -67,7 +69,7 @@ Only pure-Python embedded document store with:
 
 ## License
 
-MIT License © 2025 [Neel Sarathy](https://github.com/nsarathy)
+MIT License © 2025 [Neelesh Sarathy](https://github.com/nsarathy)
 
 ---
 

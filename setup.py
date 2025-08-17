@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="coffy",
-    version="0.2.4",
+    version="0.2.5",
     author="nsarathy",
     description="Lightweight local NoSQL, SQL, and Graph embedded database engine",
     long_description=open("README.md", encoding="utf-8").read(),
@@ -29,7 +29,9 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "coffy-sql=coffy.cli.sql_cli:sql_cli",
+            "coffy-sql=coffy.cli.sql_cli:main",
+            "coffy-nosql=coffy.cli.nosql_cli:main",
+            "coffy-graph=coffy.cli.graph_cli:main",
         ],
     },
 )
