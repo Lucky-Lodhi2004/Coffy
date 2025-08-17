@@ -309,7 +309,13 @@ It offers:
 This makes it ideal for small to medium-sized projects, educational purposes, and embedded database applications.
 
 
-# Coffy SQL CLI
+# SQL CLI
+
+## CLI Table of Contents
+- [CLI Availability](#cli-availability)
+- [Usage](#usage)
+    - [Commands](#commands)
+- [Examples](#examples)
 
 `coffy-sql` is a simple, file-backed command-line interface for working with **Coffy’s SQL wrapper** around `sqlite3`.
 It allows you to initialize databases, run SQL statements, export results, and view tables in your browser.
@@ -318,15 +324,13 @@ It allows you to initialize databases, run SQL statements, export results, and v
 
 ---
 
-## Installation
+## CLI Availability
 
 After installing Coffy, the CLI is available as:
 
 ```bash
 coffy-sql
 ```
-
-This is provided via the `console_scripts` entry point.
 
 ---
 
