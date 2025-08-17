@@ -29,7 +29,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "coffy-sql=coffy.cli.sql_cli:sql_cli",
+            "coffy-sql=coffy.cli.sql_cli:main",
         ],
     },
 )

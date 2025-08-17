@@ -25,6 +25,7 @@ pip install coffy
 - No server needed
 - Logical and comparison operators
 - Unified query interface
+- Command Line Interface (CLI)
 
 ---
 

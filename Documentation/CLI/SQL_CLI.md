@@ -1,120 +1,144 @@
 # Coffy SQL CLI
 
-A command-line interface (CLI) for interacting with the Coffy SQL engine.
+`coffy-sql` is a simple, file-backed command-line interface for working with **Coffy’s SQL wrapper** around `sqlite3`.
+It allows you to initialize databases, run SQL statements, export results, and view tables in your browser.
+
+⚠️ **Note**: In-memory databases (`:memory:`) are not allowed in this CLI. You must provide a file path.
+
+---
 
 ## Installation
-Ensure you have `coffy` installed and accessible in your environment.
+
+After installing Coffy, the CLI is available as:
 
 ```bash
-pip install -e .
+coffy-sql
 ```
 
-This will install the `coffy-sql` CLI (or `python -m coffy.cli.sql_cli` if running locally).
+This is provided via the `console_scripts` entry point.
 
 ---
 
-## Commands
+## Usage
 
-### 1. `init`
-Initialize the SQL engine.
-
-#### Usage
 ```bash
-coffy-sql init [--db <path>]
+coffy-sql --db PATH COMMAND [options...]
 ```
 
-#### Options
-| Option    | Description                          |
-|-----------|--------------------------------------|
-| `--db`    | Path to SQLite database file. If not provided, an in-memory database is used. |
+* `--db PATH` (required): Path to SQLite database file. Will be created if missing.
+  *Must be a file, not `:memory:`.*
 
-#### Example
+### Commands
+
+#### `init`
+
+Create or open a database file.
+
 ```bash
-coffy-sql init --db my_database.db
+coffy-sql --db ./users.sqlite init
 ```
+
+---
+
+#### `run`
+
+Execute one or more SQL statements.
+
+```bash
+coffy-sql --db ./users.sqlite run "SQL"
+```
+
+Options:
+
+* `SQL`: A SQL string or `@path/to/file.sql` to load statements from a file.
+* `--json`: Output SELECT results as JSON to stdout.
+* `--pretty`: Pretty-print JSON output.
+* `--out PATH`: If the last statement is a SELECT, export to `.json` or `.csv`.
+
+Examples:
+
+```bash
+# Single statement
+coffy-sql --db ./users.sqlite run "SELECT * FROM users"
+
+# Multiple statements
+coffy-sql --db ./users.sqlite run "CREATE TABLE u(id INT); INSERT INTO u VALUES(1); SELECT * FROM u" --out u.csv
+
+# Run from file
+coffy-sql --db ./users.sqlite run @init.sql --json --pretty
+```
+
+---
+
+#### `export`
+
+Run a single SELECT query and export results.
+
+```bash
+coffy-sql --db ./users.sqlite export "SELECT * FROM users" --out users.json
+```
+
+Options:
+
+* `--out PATH`: Must end with `.json` or `.csv`.
+
+---
+
+#### `view`
+
+Run a SELECT query and open the result in your default browser.
+
+```bash
+coffy-sql --db ./users.sqlite view "SELECT * FROM users"
+```
+
+Options:
+
+* `--title TITLE`: Browser tab title (default: *SQL Query Results*).
+
+---
+
+## Examples
+
+### Initialize and insert data
+
+```bash
+coffy-sql --db ./users.sqlite init
+coffy-sql --db ./users.sqlite run "CREATE TABLE users(id INT, name TEXT)"
+coffy-sql --db ./users.sqlite run "INSERT INTO users VALUES (1,'Neel'); INSERT INTO users VALUES (2,'Tanaya')"
+```
+
+### Query as table
+
+```bash
+coffy-sql --db ./users.sqlite run "SELECT * FROM users"
+```
+
 Output:
+
 ```
-Initialized SQL engine with db: my_database.db
++----+--------+
+| id | name   |
++----+--------+
+| 1  | Neel   |
+| 2  | Tanaya |
++----+--------+
 ```
 
----
+### Export as JSON
 
-### 2. `run`
-Execute a SQL query.
-
-#### Usage
 ```bash
-coffy-sql run "<SQL QUERY>"
+coffy-sql --db ./users.sqlite export "SELECT * FROM users" --out users.json
 ```
 
-#### Description
-- If the query is a `SELECT`, results will be displayed in the terminal.
-- For non-SELECT queries (e.g., `CREATE`, `INSERT`), a success message is displayed.
+### Export as CSV
 
-#### Example
 ```bash
-coffy-sql run "CREATE TABLE users (id INTEGER, name TEXT)"
-coffy-sql run "INSERT INTO users VALUES (1, 'Alice')"
-coffy-sql run "SELECT * FROM users"
-```
-Output:
-```
-id | name
----+-------
-1  | Alice
+coffy-sql --db ./users.sqlite export "SELECT * FROM users" --out users.csv
 ```
 
----
+### View in browser
 
-### 3. `view`
-Execute a SQL `SELECT` query and view the results in the browser.
-
-#### Usage
 ```bash
-coffy-sql view "<SELECT QUERY>"
-```
-
-#### Example
-```bash
-coffy-sql view "SELECT * FROM users"
-```
-This opens a browser window with an interactive HTML table.
-
-If the query is not a `SELECT`, you will see:
-```
-Not a SELECT query.
-```
-
----
-
-### 4. `close`
-Close the database connection.
-
-#### Usage
-```bash
-coffy-sql close
-```
-
-#### Example
-```bash
-coffy-sql close
-```
-Output:
-```
-Closed SQL engine connection.
-```
-
----
-
-## Notes
-- The CLI uses SQLite as the backend.
-- If no database is initialized, `init` will create an in-memory database.
-- Use `view` for visualizing large query results in a browser.
-
----
-
-## Development
-To run tests:
-```bash
-python -m unittest discover tests
+coffy-sql --db ./users.sqlite view "SELECT * FROM users"
 ```
