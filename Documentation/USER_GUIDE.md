@@ -156,6 +156,7 @@ print(ppl_col.avg("age"))
 |---|---|---|---|
 | File-backed persistence | ✅ JSON | ✅ JSON | ✅ SQLite |
 | In-memory mode | ✅ | ✅ | ✅ |
+| CLI (Command Line Interface) | ✅ | ✅ | ✅ |
 | Atomic writes on save | ✅ | ✅ | ❌ (SQLite handles durability) |
 | Auto create dirs, auto load | ✅ | ✅ | ✅ (SQLite creates file) |
 | Path validation | ✅ .json required | ✅ .json required | ✅ any .db or path |
@@ -216,4 +217,4 @@ print(ppl_col.avg("age"))
 * No explicit indexing beyond in‑memory structures (graph).
 ---
 
-MIT license © 2025 Neel Sarathy
+MIT license © 2025 Neelesh Sarathy

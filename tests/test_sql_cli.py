@@ -64,7 +64,9 @@ class TestSQLCli(unittest.TestCase):
 
     def test_run_select_as_json(self):
         self._seed_users_table()
-        code, out, err = self._run(["--db", self.db_path, "run", "SELECT * FROM users ORDER BY id", "--json"])
+        code, out, err = self._run(
+            ["--db", self.db_path, "run", "SELECT * FROM users ORDER BY id", "--json"]
+        )
         self.assertEqual(code, 0, msg=err)
         rows = json.loads(out)
         self.assertEqual(len(rows), 2)
@@ -78,7 +80,9 @@ class TestSQLCli(unittest.TestCase):
         sql_path = os.path.join(self.tmpdir.name, "q.sql")
         with open(sql_path, "w", encoding="utf-8") as f:
             f.write("SELECT name FROM users WHERE id > 1")
-        code, out, err = self._run(["--db", self.db_path, "run", f"@{sql_path}", "--json", "--pretty"])
+        code, out, err = self._run(
+            ["--db", self.db_path, "run", f"@{sql_path}", "--json", "--pretty"]
+        )
         self.assertEqual(code, 0, msg=err)
         # Pretty JSON should contain newlines and spaces, but most importantly it must be valid
         data = json.loads(out)
@@ -89,7 +93,14 @@ class TestSQLCli(unittest.TestCase):
         self._seed_users_table()
         out_path = os.path.join(self.tmpdir.name, "users.json")
         code, out, err = self._run(
-            ["--db", self.db_path, "export", "SELECT * FROM users ORDER BY id", "--out", out_path]
+            [
+                "--db",
+                self.db_path,
+                "export",
+                "SELECT * FROM users ORDER BY id",
+                "--out",
+                out_path,
+            ]
         )
         self.assertEqual(code, 0, msg=err)
         self.assertTrue(os.path.exists(out_path))
@@ -102,7 +113,14 @@ class TestSQLCli(unittest.TestCase):
         self._seed_users_table()
         out_path = os.path.join(self.tmpdir.name, "users.csv")
         code, out, err = self._run(
-            ["--db", self.db_path, "export", "SELECT * FROM users ORDER BY id", "--out", out_path]
+            [
+                "--db",
+                self.db_path,
+                "export",
+                "SELECT * FROM users ORDER BY id",
+                "--out",
+                out_path,
+            ]
         )
         self.assertEqual(code, 0, msg=err)
         self.assertTrue(os.path.exists(out_path))
@@ -123,7 +141,9 @@ class TestSQLCli(unittest.TestCase):
             "INSERT INTO t VALUES(1);"
             "SELECT * FROM users ORDER BY id"
         )
-        code, out, err = self._run(["--db", self.db_path, "run", sql, "--out", out_path])
+        code, out, err = self._run(
+            ["--db", self.db_path, "run", sql, "--out", out_path]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertTrue(os.path.exists(out_path))
         with open(out_path, "r", encoding="utf-8") as f:
@@ -140,14 +160,26 @@ class TestSQLCli(unittest.TestCase):
     def test_export_requires_select(self):
         # Non-SELECT for export should error
         self._run(["--db", self.db_path, "init"])
-        code, out, err = self._run(["--db", self.db_path, "export", "CREATE TABLE x(y INT)", "--out", os.path.join(self.tmpdir.name, "x.csv")], expect_exit=True)
+        code, out, err = self._run(
+            [
+                "--db",
+                self.db_path,
+                "export",
+                "CREATE TABLE x(y INT)",
+                "--out",
+                os.path.join(self.tmpdir.name, "x.csv"),
+            ],
+            expect_exit=True,
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("requires a select", err.lower())
 
     def test_run_errors_on_missing_sql(self):
         # Empty SQL string should error
         self._run(["--db", self.db_path, "init"])
-        code, out, err = self._run(["--db", self.db_path, "run", "   "], expect_exit=True)
+        code, out, err = self._run(
+            ["--db", self.db_path, "run", "   "], expect_exit=True
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("no sql to execute", err.lower())
 

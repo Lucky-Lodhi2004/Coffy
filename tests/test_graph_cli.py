@@ -62,17 +62,80 @@ class TestGraphCli(unittest.TestCase):
     def _seed_small_graph(self, directed=False):
         self._init_directed(directed=directed)
         # Add nodes, using Windows-friendly --prop
-        self._run(["--path", self.graph_path, "add-node", "--id", "A", "--labels", "Person",
-                   "--prop", "name=Alice", "--prop", "age=30"])
-        self._run(["--path", self.graph_path, "add-node", "--id", "B", "--labels", "Person",
-                   "--prop", "name=Bob", "--prop", "age=25"])
-        self._run(["--path", self.graph_path, "add-node", "--id", "C", "--labels", "Company",
-                   "--prop", "name=Acme"])
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "A",
+                "--labels",
+                "Person",
+                "--prop",
+                "name=Alice",
+                "--prop",
+                "age=30",
+            ]
+        )
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "B",
+                "--labels",
+                "Person",
+                "--prop",
+                "name=Bob",
+                "--prop",
+                "age=25",
+            ]
+        )
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "C",
+                "--labels",
+                "Company",
+                "--prop",
+                "name=Acme",
+            ]
+        )
         # Relationship
-        self._run(["--path", self.graph_path, "add-rel", "--source", "A", "--target", "B",
-                   "--type", "KNOWS", "--prop", "since=2010"])
-        self._run(["--path", self.graph_path, "add-rel", "--source", "B", "--target", "C",
-                   "--type", "WORKS_AT", "--prop", "title=Engineer"])
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-rel",
+                "--source",
+                "A",
+                "--target",
+                "B",
+                "--type",
+                "KNOWS",
+                "--prop",
+                "since=2010",
+            ]
+        )
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-rel",
+                "--source",
+                "B",
+                "--target",
+                "C",
+                "--type",
+                "WORKS_AT",
+                "--prop",
+                "title=Engineer",
+            ]
+        )
 
     # ---------- init ----------
 
@@ -94,22 +157,41 @@ class TestGraphCli(unittest.TestCase):
         props_file = os.path.join(self.tmpdir.name, "props.json")
         with open(props_file, "w", encoding="utf-8") as f:
             json.dump({"name": "Alice", "age": 20, "city": "X"}, f)
-        code, out, err = self._run([
-            "--path", self.graph_path, "add-node", "--id", "A",
-            "--labels", '["Person","Employee"]',
-            "--props", f"@{props_file}",
-            "--prop", "age=30"  # override
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "A",
+                "--labels",
+                '["Person","Employee"]',
+                "--props",
+                f"@{props_file}",
+                "--prop",
+                "age=30",  # override
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"node_id": "A"', out)
 
         # Validate via find-nodes projection
-        code, out, err = self._run([
-            "--path", self.graph_path, "find-nodes",
-            "--label", "Person",
-            "--conds", '{"name":"Alice"}',
-            "--fields", "id", "name", "age", "city"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-nodes",
+                "--label",
+                "Person",
+                "--conds",
+                '{"name":"Alice"}',
+                "--fields",
+                "id",
+                "name",
+                "age",
+                "city",
+            ]
+        )
         data = json.loads(out)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["id"], "A")
@@ -118,13 +200,14 @@ class TestGraphCli(unittest.TestCase):
 
     def test_add_nodes_bulk_from_stdin(self):
         self._init_directed()
-        payload = json.dumps([
-            {"id": "X1", "labels": ["Person"], "name": "P1"},
-            {"id": "X2", "labels": "Company", "name": "C1"}
-        ])
+        payload = json.dumps(
+            [
+                {"id": "X1", "labels": ["Person"], "name": "P1"},
+                {"id": "X2", "labels": "Company", "name": "C1"},
+            ]
+        )
         code, out, err = self._run(
-            ["--path", self.graph_path, "add-nodes", "-"],
-            stdin_data=payload
+            ["--path", self.graph_path, "add-nodes", "-"], stdin_data=payload
         )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"inserted": 2', out)
@@ -134,18 +217,53 @@ class TestGraphCli(unittest.TestCase):
     def test_add_rel_with_prop_and_props(self):
         self._init_directed()
         # Add nodes first
-        self._run(["--path", self.graph_path, "add-node", "--id", "A", "--labels", "Person", "--prop", "name=Alice"])
-        self._run(["--path", self.graph_path, "add-node", "--id", "B", "--labels", "Person", "--prop", "name=Bob"])
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "A",
+                "--labels",
+                "Person",
+                "--prop",
+                "name=Alice",
+            ]
+        )
+        self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-node",
+                "--id",
+                "B",
+                "--labels",
+                "Person",
+                "--prop",
+                "name=Bob",
+            ]
+        )
         # Relationship with mix of props
         props_file = os.path.join(self.tmpdir.name, "relprops.json")
         with open(props_file, "w", encoding="utf-8") as f:
             json.dump({"since": 2009, "weight": 0.5}, f)
-        code, out, err = self._run([
-            "--path", self.graph_path, "add-rel",
-            "--source", "A", "--target", "B", "--type", "KNOWS",
-            "--props", f"@{props_file}",
-            "--prop", "since=2010"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "add-rel",
+                "--source",
+                "A",
+                "--target",
+                "B",
+                "--type",
+                "KNOWS",
+                "--props",
+                f"@{props_file}",
+                "--prop",
+                "since=2010",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"source": "A"', out)
         self.assertIn('"type": "KNOWS"', out)
@@ -154,11 +272,16 @@ class TestGraphCli(unittest.TestCase):
         self._seed_small_graph()
         rels_file = os.path.join(self.tmpdir.name, "rels.json")
         with open(rels_file, "w", encoding="utf-8") as f:
-            json.dump([
-                {"source": "A", "target": "C", "type": "LIKES", "weight": 0.9},
-                {"source": "C", "target": "A", "type": "EMPLOYS"}
-            ], f)
-        code, out, err = self._run(["--path", self.graph_path, "add-rels", f"@{rels_file}"])
+            json.dump(
+                [
+                    {"source": "A", "target": "C", "type": "LIKES", "weight": 0.9},
+                    {"source": "C", "target": "A", "type": "EMPLOYS"},
+                ],
+                f,
+            )
+        code, out, err = self._run(
+            ["--path", self.graph_path, "add-rels", f"@{rels_file}"]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"inserted": 2', out)
 
@@ -166,12 +289,18 @@ class TestGraphCli(unittest.TestCase):
 
     def test_find_nodes_with_conditions_or_logic(self):
         self._seed_small_graph()
-        code, out, err = self._run([
-            "--path", self.graph_path, "find-nodes",
-            "--label", "Person",
-            "--conds", '{"_logic":"or","name":"Alice","age":{"gt":35}}',
-            "--pretty"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-nodes",
+                "--label",
+                "Person",
+                "--conds",
+                '{"_logic":"or","name":"Alice","age":{"gt":35}}',
+                "--pretty",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         data = json.loads(out)
         self.assertGreaterEqual(len(data), 1)
@@ -179,14 +308,24 @@ class TestGraphCli(unittest.TestCase):
 
     def test_find_nodes_projection_limit_offset(self):
         self._seed_small_graph()
-        code, out, err = self._run([
-            "--path", self.graph_path, "find-nodes",
-            "--label", "Person",
-            "--conds", '{}',
-            "--fields", "id", "name",
-            "--limit", "1",
-            "--offset", "1"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-nodes",
+                "--label",
+                "Person",
+                "--conds",
+                "{}",
+                "--fields",
+                "id",
+                "name",
+                "--limit",
+                "1",
+                "--offset",
+                "1",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         data = json.loads(out)
         self.assertEqual(len(data), 1)
@@ -196,12 +335,22 @@ class TestGraphCli(unittest.TestCase):
 
     def test_find_rels_by_type_and_cond(self):
         self._seed_small_graph(directed=True)
-        code, out, err = self._run([
-            "--path", self.graph_path, "--directed", "find-rels",
-            "--type", "WORKS_AT",
-            "--conds", '{"title":"Engineer"}',
-            "--fields", "source", "target", "title"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "--directed",
+                "find-rels",
+                "--type",
+                "WORKS_AT",
+                "--conds",
+                '{"title":"Engineer"}',
+                "--fields",
+                "source",
+                "target",
+                "title",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         rows = json.loads(out)
         self.assertEqual(len(rows), 1)
@@ -214,7 +363,9 @@ class TestGraphCli(unittest.TestCase):
     def test_neighbors_and_degree(self):
         self._seed_small_graph(directed=False)
         # neighbors of A should include B and possibly C after add-rels test, but here just B
-        code, out, err = self._run(["--path", self.graph_path, "neighbors", "--id", "A"])
+        code, out, err = self._run(
+            ["--path", self.graph_path, "neighbors", "--id", "A"]
+        )
         self.assertEqual(code, 0, msg=err)
         nbrs = json.loads(out)
         self.assertIn("B", nbrs)
@@ -230,33 +381,60 @@ class TestGraphCli(unittest.TestCase):
     def test_match_node_path_and_full_and_structured(self):
         self._seed_small_graph(directed=True)
         # Node path: Alice -[KNOWS]-> Bob
-        code, out, err = self._run([
-            "--path", self.graph_path, "--directed", "match-node-path",
-            "--start", '{"name":"Alice"}',
-            "--pattern", '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]',
-            "--node-fields", "id", "name",
-            "--pretty"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "--directed",
+                "match-node-path",
+                "--start",
+                '{"name":"Alice"}',
+                "--pattern",
+                '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]',
+                "--node-fields",
+                "id",
+                "name",
+                "--pretty",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         seqs = json.loads(out)
         self.assertGreaterEqual(len(seqs), 1)
         # Full path includes nodes and rels
-        code, out, err = self._run([
-            "--path", self.graph_path, "--directed", "match-full-path",
-            "--start", '{"name":"Alice"}',
-            "--pattern", '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]',
-            "--node-fields", "id", "name",
-            "--rel-fields", "type", "since"
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "--directed",
+                "match-full-path",
+                "--start",
+                '{"name":"Alice"}',
+                "--pattern",
+                '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]',
+                "--node-fields",
+                "id",
+                "name",
+                "--rel-fields",
+                "type",
+                "since",
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         full = json.loads(out)
         self.assertGreaterEqual(len(full), 1)
         # Structured
-        code, out, err = self._run([
-            "--path", self.graph_path, "--directed", "match-structured",
-            "--start", '{"name":"Alice"}',
-            "--pattern", '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]'
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "--directed",
+                "match-structured",
+                "--start",
+                '{"name":"Alice"}',
+                "--pattern",
+                '[{"rel_type":"KNOWS","node":{"name":"Bob"}}]',
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         structured = json.loads(out)
         self.assertGreaterEqual(len(structured), 1)
@@ -271,7 +449,9 @@ class TestGraphCli(unittest.TestCase):
         nodes = json.loads(out)
         self.assertGreaterEqual(len(nodes), 3)
         # export relationships
-        code, out, err = self._run(["--path", self.graph_path, "export", "relationships"])
+        code, out, err = self._run(
+            ["--path", self.graph_path, "export", "relationships"]
+        )
         self.assertEqual(code, 0, msg=err)
         rels = json.loads(out)
         self.assertGreaterEqual(len(rels), 2)
@@ -290,11 +470,15 @@ class TestGraphCli(unittest.TestCase):
     def test_remove_node_and_relationship(self):
         self._seed_small_graph()
         # remove relationship A->B
-        code, out, err = self._run(["--path", self.graph_path, "remove-rel", "--source", "A", "--target", "B"])
+        code, out, err = self._run(
+            ["--path", self.graph_path, "remove-rel", "--source", "A", "--target", "B"]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"removed"', out)
         # remove node B
-        code, out, err = self._run(["--path", self.graph_path, "remove-node", "--id", "B"])
+        code, out, err = self._run(
+            ["--path", self.graph_path, "remove-node", "--id", "B"]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertIn('"removed_node": "B"', out)
 
@@ -303,10 +487,19 @@ class TestGraphCli(unittest.TestCase):
     def test_find_nodes_out_creates_parent(self):
         self._seed_small_graph()
         out_file = os.path.join(self.tmpdir.name, "sub", "dir", "nodes.json")
-        code, out, err = self._run([
-            "--path", self.graph_path, "find-nodes",
-            "--label", "Person", "--conds", "{}", "--out", out_file
-        ])
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-nodes",
+                "--label",
+                "Person",
+                "--conds",
+                "{}",
+                "--out",
+                out_file,
+            ]
+        )
         self.assertEqual(code, 0, msg=err)
         self.assertTrue(os.path.exists(out_file))
         with open(out_file, "r", encoding="utf-8") as f:
@@ -327,51 +520,90 @@ class TestGraphCli(unittest.TestCase):
 
     def test_add_nodes_requires_array(self):
         self._init_directed()
-        code, out, err = self._run(["--path", self.graph_path, "add-nodes", '{"id":"X"}'], expect_exit=True)
+        code, out, err = self._run(
+            ["--path", self.graph_path, "add-nodes", '{"id":"X"}'], expect_exit=True
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("json array of node dicts", err.lower())
 
     def test_add_rels_requires_array(self):
         self._init_directed()
-        code, out, err = self._run(["--path", self.graph_path, "add-rels", '{"source":"A","target":"B"}'], expect_exit=True)
+        code, out, err = self._run(
+            ["--path", self.graph_path, "add-rels", '{"source":"A","target":"B"}'],
+            expect_exit=True,
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("json array of relationship dicts", err.lower())
 
     def test_find_nodes_conds_must_be_object(self):
         self._seed_small_graph()
-        code, out, err = self._run([
-            "--path", self.graph_path, "find-nodes", "--label", "Person", "--conds", "[]"
-        ], expect_exit=True)
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-nodes",
+                "--label",
+                "Person",
+                "--conds",
+                "[]",
+            ],
+            expect_exit=True,
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("must be a json object", err.lower())
 
     def test_matchers_require_object_and_array(self):
         self._seed_small_graph()
         # start must be object
-        code, out, err = self._run([
-            "--path", self.graph_path, "match-node-path",
-            "--start", "[]", "--pattern", "[]"
-        ], expect_exit=True)
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "match-node-path",
+                "--start",
+                "[]",
+                "--pattern",
+                "[]",
+            ],
+            expect_exit=True,
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("--start must be a json object", err.lower())
         # pattern must be array
-        code, out, err = self._run([
-            "--path", self.graph_path, "match-full-path",
-            "--start", "{}", "--pattern", "{}"
-        ], expect_exit=True)
+        code, out, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "match-full-path",
+                "--start",
+                "{}",
+                "--pattern",
+                "{}",
+            ],
+            expect_exit=True,
+        )
         self.assertNotEqual(code, 0)
         self.assertIn("--pattern must be a json array", err.lower())
 
     def test_pretty_flag_changes_size(self):
         self._seed_small_graph()
-        code, out1, err = self._run([
-            "--path", self.graph_path, "find-rels", "--type", "KNOWS", "--conds", "{}"
-        ])
-        code, out2, err = self._run([
-            "--path", self.graph_path, "find-rels", "--type", "KNOWS", "--conds", "{}", "--pretty"
-        ])
+        code, out1, err = self._run(
+            ["--path", self.graph_path, "find-rels", "--type", "KNOWS", "--conds", "{}"]
+        )
+        code, out2, err = self._run(
+            [
+                "--path",
+                self.graph_path,
+                "find-rels",
+                "--type",
+                "KNOWS",
+                "--conds",
+                "{}",
+                "--pretty",
+            ]
+        )
         self.assertTrue(len(out2) > len(out1))
 
 
-print("Running Graph CLI tests...")
+print("Graph CLI tests...")
 unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(TestGraphCli))
